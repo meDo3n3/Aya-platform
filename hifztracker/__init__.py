@@ -1,2 +1,3 @@
-# hifztracker/__init__.py
-# (لا شيء خاص مطلوب هنا حالياً)
+import pymysql
+
+pymysql.install_as_MySQLdb()

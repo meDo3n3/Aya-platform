@@ -56,17 +56,15 @@ TEMPLATES = [
 
 
 
-ALLOWED_HOSTS = [
-    "quran-production-7f22.up.railway.app",   # دومين Railway بتاعك
-    "127.0.0.1", "localhost",
-]
+
+allowed_hosts_string = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost')
+ALLOWED_HOSTS = allowed_hosts_string.split(',')
 
 # من Django 4+ لازم البروتوكول يكون واضح (https://)
-CSRF_TRUSTED_ORIGINS = [
-    "https://quran-production-7f22.up.railway.app",
-    "https://*.up.railway.app",   # مفيد لو بيتغير الساب دومين
-    # لو عندك دومين مخصص ضيفه هنا بنفس الشكل https://yourdomain.com
-]
+csrf_origins_string = os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://127.0.0.1,http://localhost')
+CSRF_TRUSTED_ORIGINS = csrf_origins_string.split(',')
+
+
 
 # طالما بتشتغل HTTPS على Railway:
 CSRF_COOKIE_SECURE = True
@@ -80,12 +78,21 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 WSGI_APPLICATION = 'hifztracker.wsgi.application'
 
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql', # استخدم هذا حتى لو كنت تستعمل PyMySQL
+
+        # اقرأ المتغيرات من Railway، وإذا لم تجدها، استخدم القيم المحلية
+        'NAME': os.environ.get('MYSQLDATABASE', 'aya_platform_db'), # 'aya_platform_db' هو الاسم الذي اخترته محلياً
+        'USER': os.environ.get('MYSQLUSER', 'root'),             # 'root' هو المستخدم المحلي الافتراضي
+        'PASSWORD': os.environ.get('MYSQLPASSWORD', ''),         # '' (فارغ) هو الباسوورد المحلي الافتراضي
+        'HOST': os.environ.get('MYSQLHOST', '127.0.0.1'),        # '127.0.0.1' أو 'localhost'
+        'PORT': os.environ.get('MYSQLPORT', '3306'),             # '3306' هو البورت الافتراضي لـ MySQL
     }
 }
+
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
