@@ -85,7 +85,7 @@ WSGI_APPLICATION = 'hifztracker.wsgi.application'
 #     }
 # }
 
-MySQL Configuration (Commented out for reference)
+# MySQL Configuration (Commented out for reference)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
