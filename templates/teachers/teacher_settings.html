@@ -43,10 +43,19 @@
                             <input class="w-full p-3 bg-background dark:bg-background-dark border border-border-color dark:border-border-color-dark rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition" id="email" name="email" type="email" value="{{ user.email }}">
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-2" for="password">كلمة المرور الجديدة</label>
-                        {# أضفنا `name` للحقول لتُرسل مع الفورم #}
-                        <input class="w-full p-3 bg-background dark:bg-background-dark border border-border-color dark:border-border-color-dark rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition" id="password" name="password" placeholder="اتركها فارغة لعدم التغيير" type="password">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-2" for="current_password">كلمة المرور الحالية</label>
+                            <input class="w-full p-3 bg-background dark:bg-background-dark border border-border-color dark:border-border-color-dark rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition" id="current_password" name="current_password" type="password" placeholder="مطلوب فقط عند تغيير كلمة المرور">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-2" for="new_password">كلمة المرور الجديدة</label>
+                            <input class="w-full p-3 bg-background dark:bg-background-dark border border-border-color dark:border-border-color-dark rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition" id="new_password" name="new_password" type="password" placeholder="اتركها فارغة لعدم التغيير">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-2" for="confirm_password">تأكيد كلمة المرور الجديدة</label>
+                            <input class="w-full p-3 bg-background dark:bg-background-dark border border-border-color dark:border-border-color-dark rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition" id="confirm_password" name="confirm_password" type="password" placeholder="تأكيد كلمة المرور الجديدة">
+                        </div>
                     </div>
                 </div>
             </section>

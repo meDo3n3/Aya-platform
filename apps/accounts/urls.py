@@ -56,6 +56,14 @@ urlpatterns = [
         views.submit_task,
         name="submit_task",
     ),
+
+    # --- Forgot Password ---
+    path('forgot-password/', views.forgot_password_view, name='forgot_password'),
+    path('verify-code/', views.verify_reset_view, name='verify_code'),
+    
+    # Student Approval
+    path('get-pending-requests/', views.get_pending_requests, name='get_pending_requests'),
+    path('process-join-request/', views.process_join_request, name='process_join_request'),
 ]
 
 

@@ -417,7 +417,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.status === 'success') {
                 const config = data.role === 'teacher' 
                     ? { icon: 'info', title: 'طلبك قيد المراجعة', text: 'شكرًا لتسجيلك! سيتم مراجعة حسابك كمعلم من قبل الإدارة وسيتم إعلامك عند التفعيل.' }
-                    : { icon: 'success', title: 'تم إنشاء الحساب بنجاح!', text: 'مرحبًا بك في منصة آية. يمكنك الآن تسجيل الدخول.' };
+                    : { icon: 'warning', title: 'طلبك قيد الانتظار', text: 'طلبك في قائمة انتظار الموافقة من المعلم.' };
                 Swal.fire({ ...config, confirmButtonText: 'حسنًا، الانتقال لتسجيل الدخول', confirmButtonColor: '#386641' })
                 .then(() => { window.location.href = loginUrl; });
             } else {

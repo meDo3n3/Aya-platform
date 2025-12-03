@@ -36,8 +36,11 @@ from apps.accounts.models import (
     Attendance,
     Profile, Halaqa,
     Review, ReviewSubmission,
-    Surah
+    Surah,
+    PasswordResetCode
 )
+import random
+from django.core.mail import send_mail
 
 # ========= أدوات مساعدة =========
 AR_HIJRI_MONTHS = [
@@ -127,13 +130,19 @@ def login_view(request):
         # 4) منطق الموافقة/التفعيل
         # لو بتستخدم is_active كقفل عام:
         if not user_obj.is_active:
-            # لو معلّم ولسه مش Approved، وضّح الرسالة
-            if profile.role == Profile.ROLE_TEACHER and profile.teacher_status != Profile.TEACHER_APPROVED:
-                messages.error(request, "طلبك كمعلّم قيد المراجعة. سيتم تفعيل الحساب بعد الموافقة.")
+            if hasattr(user_obj, 'profile'):
+                if user_obj.profile.teacher_status == Profile.TEACHER_PENDING:
+                    messages.warning(request, "لم يتم الموافقة حتى الآن.")
+                elif user_obj.profile.teacher_status == Profile.TEACHER_REJECTED:
+                    messages.error(request, "عذراً، تم رفض طلب انضمامك.")
+                    user_obj.delete() # حذف الحساب ليتمكن من التسجيل مرة أخرى
+                else:
+                    messages.error(request, "تم تعطيل حسابك. يرجى التواصل مع الإدارة.")
             else:
-                messages.error(request, "الحساب غير مُفعّل. يُرجى تفعيل الحساب أولًا.")
+                messages.error(request, "حسابك غير نشط.")
             return render(request, "accounts/login.html", {"selected_role": role})
 
+        # لو الحساب مفعّل لكن المعلّم غير معتمد
         # لو الحساب مفعّل لكن المعلّم غير معتمد
         if profile.role == Profile.ROLE_TEACHER and profile.teacher_status != Profile.TEACHER_APPROVED:
             messages.error(request, "حساب المعلّم الخاص بك قيد المراجعة. سيتم إشعارك عند الموافقة عليه.")
@@ -246,7 +255,9 @@ def register_view(request):
             if role == Profile.ROLE_STUDENT:
                 profile.halaqa = halaqa_obj
                 profile.guardian_phone = guardian_phone
-                profile.teacher_status = Profile.TEACHER_APPROVED
+                profile.teacher_status = Profile.TEACHER_PENDING # Students are now pending
+                user.is_active = False # Disable login until approved
+                user.save()
             else: # role is TEACHER
                 profile.institution = institution
                 profile.bio = bio
@@ -259,7 +270,7 @@ def register_view(request):
         if is_ajax:
             return JsonResponse({'status': 'success', 'role': role})
         
-        messages.success(request, "تم إنشاء الحساب بنجاح!")
+        messages.warning(request, "طلبك في قائمة انتظار الموافقة من المعلم.")
         return redirect("accounts:login")
 
     except Exception as e:
@@ -574,8 +585,12 @@ def teacher_dashboard(request):
 
     # --- تحويل التاريخ إلى هجري ---
     today_gregorian = date.today()
-    hijri_date = _Gregorian(today_gregorian.year, today_gregorian.month, today_gregorian.day).to_hijri()
-    formatted_hijri_date = f"{hijri_date.day_name('ar')}، {hijri_date.day} {hijri_date.month_name('ar')} {hijri_date.year}"
+    if HIJRI_OK:
+        hijri_date = _Gregorian(today_gregorian.year, today_gregorian.month, today_gregorian.day).to_hijri()
+        formatted_hijri_date = f"{hijri_date.day_name('ar')}، {hijri_date.day} {hijri_date.month_name('ar')} {hijri_date.year}"
+    else:
+        # Fallback if library is missing
+        formatted_hijri_date = today_gregorian.strftime("%Y-%m-%d")
 
     # --- إرسال البيانات بالأسماء الصحيحة للقالب ---
     context = {
@@ -1339,43 +1354,63 @@ def teacher_settings_view(request):
     profile = user.profile
 
     if request.method == 'POST':
-        profile_form = ProfileUpdateForm(request.POST, request.FILES, instance=profile, initial={'username': user.username, 'email': user.email})
-        password_form = PasswordChangeForm(user, request.POST)
+        try:
+            # 1. تحديث المعلومات الشخصية
+            username = request.POST.get('username')
+            email = request.POST.get('email')
+            
+            if username: user.username = username
+            if email: user.email = email
+            user.save()
 
-        # التحقق أي زر تم الضغط عليه
-        if 'update_profile' in request.POST:
-            if profile_form.is_valid():
-                user.username = profile_form.cleaned_data['username']
-                user.email = profile_form.cleaned_data['email']
+            # التعامل مع الصورة
+            if request.FILES.get('avatar'):
+                profile.photo = request.FILES['avatar']
+            elif request.POST.get('remove_avatar') == 'true':
+                profile.photo.delete(save=False)
+                profile.photo = None
+            
+            # تحديث الإشعارات
+            profile.email_notifications = 'email_notifications' in request.POST
+            profile.app_notifications = 'app_notifications' in request.POST
+            profile.save()
+
+            # 2. تحديث كلمة المرور (اختياري)
+            current_password = request.POST.get('current_password')
+            new_password = request.POST.get('new_password')
+            confirm_password = request.POST.get('confirm_password')
+
+            if current_password or new_password or confirm_password:
+                # التحقق من اكتمال الحقول
+                if not (current_password and new_password and confirm_password):
+                    return JsonResponse({'status': 'error', 'message': 'يرجى ملء جميع حقول كلمة المرور لتغييرها.'}, status=400)
+                
+                # التحقق من كلمة المرور الحالية
+                if not user.check_password(current_password):
+                    return JsonResponse({'status': 'error', 'message': 'كلمة المرور الحالية غير صحيحة.'}, status=400)
+                
+                # التحقق من تطابق الجديدة
+                if new_password != confirm_password:
+                    return JsonResponse({'status': 'error', 'message': 'كلمة المرور الجديدة غير متطابقة.'}, status=400)
+                
+                # تغيير كلمة المرور
+                user.set_password(new_password)
                 user.save()
-                profile_form.save()
+                update_session_auth_hash(request, user) # الحفاظ على تسجيل الدخول
 
-                # تحديث تفضيلات الإشعارات
-                profile.email_notifications = 'email_notifications' in request.POST
-                profile.app_notifications = 'app_notifications' in request.POST
-                profile.save()
+            return JsonResponse({
+                'status': 'success',
+                'message': 'تم حفظ التغييرات بنجاح!',
+                'new_avatar_url': profile.avatar_url
+            })
 
-                messages.success(request, 'تم حفظ التغييرات بنجاح.')
-            else:
-                messages.error(request, 'يرجى تصحيح الأخطاء في معلوماتك الشخصية.')
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': f'حدث خطأ: {str(e)}'}, status=500)
 
-        elif 'change_password' in request.POST:
-            if password_form.is_valid():
-                user = password_form.save()
-                update_session_auth_hash(request, user)
-                messages.success(request, 'تم تغيير كلمة المرور بنجاح.')
-            else:
-                messages.error(request, 'فشل تغيير كلمة المرور، يرجى مراجعة الأخطاء.')
-        
-        return redirect('accounts:teacher_settings')
-
-    else:
-        profile_form = ProfileUpdateForm(instance=profile, initial={'username': user.username, 'email': user.email})
-        password_form = PasswordChangeForm(user)
-
+    # GET request
     context = {
-        'profile_form': profile_form,
-        'password_form': password_form,
+        'profile': profile,
+        # 'default_avatar_url': static('img/avatars/male.png') # يمكن تمريرها إذا لزم الأمر
     }
     return render(request, 'teachers/teacher_settings.html', context)
 
@@ -1427,32 +1462,65 @@ def student_settings_view(request):
         return redirect('accounts:teacher_dashboard')
 
     if request.method == 'POST':
-        # بما أننا نستخدم AJAX، سنقوم بمعالجة البيانات ونعيد رد JSON
-        
-        # 1. تحديث معلومات الملف الشخصي
-        user.first_name = request.POST.get('full_name', '').split(' ')[0]
-        user.last_name = ' '.join(request.POST.get('full_name', '').split(' ')[1:])
-        user.save()
+        try:
+            # 1. تحديث المعلومات الشخصية
+            full_name = request.POST.get('full_name')
+            if full_name:
+                parts = full_name.strip().split(' ', 1)
+                user.first_name = parts[0]
+                user.last_name = parts[1] if len(parts) > 1 else ''
+                user.save()
 
-        if request.FILES.get('avatar'):
-            profile.avatar = request.FILES['avatar']
-        elif request.POST.get('remove_avatar') == 'true':
-            profile.avatar.delete(save=True)
+            if request.FILES.get('avatar'):
+                profile.photo = request.FILES['avatar']
+            elif request.POST.get('remove_avatar') == 'true':
+                profile.photo.delete(save=False)
+                profile.photo = None
             
-        # 2. تحديث تفضيلات الإشعارات
-        profile.email_notifications = 'email_notifications' in request.POST
-        profile.save()
+            # تحديث الحلقة
+            halaqa_id = request.POST.get('halaqa')
+            if halaqa_id:
+                try:
+                    halaqa = Halaqa.objects.get(id=halaqa_id)
+                    profile.halaqa = halaqa
+                except Halaqa.DoesNotExist:
+                    pass
+            
+            # تحديث تفضيلات الإشعارات
+            profile.email_notifications = 'email_notifications' in request.POST
+            profile.save()
 
-        # 3. تحديث كلمة المرور (فقط إذا تم إدخال كلمة مرور جديدة)
-        if request.POST.get('new_password1'):
-            password_form = PasswordChangeForm(user, request.POST)
-            if password_form.is_valid():
-                user = password_form.save()
-                update_session_auth_hash(request, user)
-            else:
-                # إرجاع الخطأ الأول الذي يظهر في الفورم
-                first_error = next(iter(password_form.errors.values()))[0]
-                return JsonResponse({'status': 'error', 'message': first_error}, status=400)
+            # 2. تحديث كلمة المرور (اختياري)
+            current_password = request.POST.get('current_password')
+            new_password = request.POST.get('new_password')
+            confirm_password = request.POST.get('confirm_password')
+
+            if current_password or new_password or confirm_password:
+                # التحقق من اكتمال الحقول
+                if not (current_password and new_password and confirm_password):
+                    return JsonResponse({'status': 'error', 'message': 'يرجى ملء جميع حقول كلمة المرور لتغييرها.'}, status=400)
+                
+                # التحقق من كلمة المرور الحالية
+                if not user.check_password(current_password):
+                    return JsonResponse({'status': 'error', 'message': 'كلمة المرور الحالية غير صحيحة.'}, status=400)
+                
+                # التحقق من تطابق الجديدة
+                if new_password != confirm_password:
+                    return JsonResponse({'status': 'error', 'message': 'كلمة المرور الجديدة غير متطابقة.'}, status=400)
+                
+                # تغيير كلمة المرور
+                user.set_password(new_password)
+                user.save()
+                update_session_auth_hash(request, user) # الحفاظ على تسجيل الدخول
+
+            return JsonResponse({
+                'status': 'success',
+                'message': 'تم حفظ التغييرات بنجاح!',
+                'new_avatar_url': profile.avatar_url
+            })
+
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': f'حدث خطأ: {str(e)}'}, status=500)
         
         return JsonResponse({
             'status': 'success',
@@ -1462,9 +1530,11 @@ def student_settings_view(request):
 
     # في حالة طلب GET، نعرض الصفحة كالمعتاد
     password_form = PasswordChangeForm(user)
+    halaqas = Halaqa.objects.all() # جلب كل الحلقات
     context = {
         'profile': profile,
         'password_form': password_form,
+        'halaqas': halaqas, # إرسال الحلقات للقالب
         # الصورة الافتراضية في حال قام المستخدم بإزالة صورته
         'default_avatar_url': static('images/default_avatar.png') 
     }
@@ -1547,4 +1617,149 @@ def recitation_record(request, task_type, task_id):
         "task": task,
         "task_type": task_type,  # 'recitation' أو 'review'
     })
+
+
+# ==============================================================================
+# Forgot Password Views
+# ==============================================================================
+
+def forgot_password_view(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        try:
+            user = User.objects.get(email=email)
+            
+            # Generate 6-digit OTP
+            otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+            
+            # Save or update OTP in database
+            PasswordResetCode.objects.update_or_create(
+                user=user,
+                defaults={'code': otp, 'created_at': timezone.now()}
+            )
+            
+            # Send email
+            send_mail(
+                'Password Reset OTP',
+                f'Your OTP for password reset is: {otp}',
+                settings.EMAIL_HOST_USER,
+                [email],
+                fail_silently=False,
+            )
+            
+            # Save email in session for the next step
+            request.session['reset_email'] = email
+            return redirect('accounts:verify_code')
+            
+        except User.DoesNotExist:
+            messages.error(request, 'Email not found.')
+            
+    return render(request, 'accounts/forgot_password.html')
+
+def verify_reset_view(request):
+    email = request.session.get('reset_email')
+    if not email:
+        return redirect('accounts:forgot_password')
+        
+    if request.method == 'POST':
+        otp_code = request.POST.get('otp_code')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+        
+        try:
+            user = User.objects.get(email=email)
+            reset_code = user.password_reset_code
+            
+            if reset_code.code == otp_code and reset_code.is_valid():
+                if new_password == confirm_password:
+                    user.set_password(new_password)
+                    user.save()
+                    
+                    # Clean up
+                    reset_code.delete()
+                    del request.session['reset_email']
+                    
+                    messages.success(request, 'Password reset successfully. Please login.')
+                    return redirect('accounts:login')
+                else:
+                    messages.error(request, 'Passwords do not match.')
+            else:
+                messages.error(request, 'Invalid or expired OTP.')
+                
+        except (User.DoesNotExist, PasswordResetCode.DoesNotExist):
+            messages.error(request, 'Invalid request.')
+            
+    return render(request, 'accounts/verify_code.html')
+
+
+# ========= إدارة طلبات الانضمام (للمعلم) =========
+
+@login_required
+@require_POST
+def get_pending_requests(request):
+    """جلب قائمة الطلاب المعلقين لحلقات المعلم"""
+    user = request.user
+    if not hasattr(user, 'profile') or user.profile.role != Profile.ROLE_TEACHER:
+        return JsonResponse({'status': 'error', 'message': 'غير مصرح'}, status=403)
+
+    teacher_halaqas = user.profile.halaqat_as_teacher.all()
+    pending_students = Profile.objects.filter(
+        role=Profile.ROLE_STUDENT,
+        halaqa__in=teacher_halaqas,
+        teacher_status=Profile.TEACHER_PENDING
+    ).select_related('user', 'halaqa')
+
+    data = []
+    for p in pending_students:
+        data.append({
+            'id': p.user.id,
+            'name': p.user.get_full_name() or p.user.username,
+            'email': p.user.email,
+            'halaqa': p.halaqa.name,
+            'date': p.user.date_joined.strftime('%Y-%m-%d'),
+            'avatar_url': p.avatar_url
+        })
+    
+    return JsonResponse({'status': 'success', 'students': data})
+
+@login_required
+@require_POST
+def process_join_request(request):
+    """قبول أو رفض طلب انضمام طالب"""
+    user = request.user
+    if not hasattr(user, 'profile') or user.profile.role != Profile.ROLE_TEACHER:
+        return JsonResponse({'status': 'error', 'message': 'غير مصرح'}, status=403)
+
+    student_id = request.POST.get('student_id')
+    action = request.POST.get('action') # 'approve' or 'reject'
+
+    if not student_id or action not in ['approve', 'reject']:
+        return JsonResponse({'status': 'error', 'message': 'بيانات غير صالحة'}, status=400)
+
+    try:
+        student_user = User.objects.get(id=student_id)
+        student_profile = student_user.profile
+        
+        # التأكد أن الطالب تابع لحلقة المعلم
+        if not user.profile.halaqat_as_teacher.filter(id=student_profile.halaqa.id).exists():
+             return JsonResponse({'status': 'error', 'message': 'هذا الطالب ليس في حلقاتك'}, status=403)
+
+        if action == 'approve':
+            student_user.is_active = True
+            student_user.save()
+            student_profile.teacher_status = Profile.TEACHER_APPROVED
+            student_profile.save()
+            message = 'تم قبول الطالب بنجاح'
+        else:
+            student_profile.teacher_status = Profile.TEACHER_REJECTED
+            student_profile.save()
+            # لا نحذف المستخدم هنا، نتركه ليرى رسالة الرفض عند محاولة الدخول
+            message = 'تم رفض الطالب'
+
+        return JsonResponse({'status': 'success', 'message': message})
+
+    except User.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'المستخدم غير موجود'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 

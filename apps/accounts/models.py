@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.templatetags.static import static
+import datetime
 
 # ==============================================================================
 # Models الأساسية (Halaqa, Surah, Profile)
@@ -87,8 +88,9 @@ class Profile(models.Model):
 
     def clean(self):
         super().clean()
-        if self.role != self.ROLE_TEACHER:
-            self.teacher_status = self.TEACHER_APPROVED
+        # Removed auto-approval logic to allow pending state for students
+        # if self.role != self.ROLE_TEACHER:
+        #     self.teacher_status = self.TEACHER_APPROVED
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -231,3 +233,14 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"إشعار لـ {self.recipient.user.username}"
+
+class PasswordResetCode(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='password_reset_code')
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_valid(self):
+        return self.created_at >= timezone.now() - datetime.timedelta(minutes=15)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.code}"
