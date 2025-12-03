@@ -79,25 +79,25 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 WSGI_APPLICATION = 'hifztracker.wsgi.application'
 
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.mysql', # استخدم هذا حتى لو كنت تستعمل PyMySQL
-
-#         # اقرأ المتغيرات من Railway، وإذا لم تجدها، استخدم القيم المحلية
-#         'NAME': os.environ.get('MYSQLDATABASE', 'aya_platform_db'), # 'aya_platform_db' هو الاسم الذي اخترته محلياً
-#         'USER': os.environ.get('MYSQLUSER', 'root'),             # 'root' هو المستخدم المحلي الافتراضي
-#         'PASSWORD': os.environ.get('MYSQLPASSWORD', ''),         # '' (فارغ) هو الباسوورد المحلي الافتراضي
-#         'HOST': os.environ.get('MYSQLHOST', '127.0.0.1'),        # '127.0.0.1' أو 'localhost'
-#         'PORT': os.environ.get('MYSQLPORT', '3306'),             # '3306' هو البورت الافتراضي لـ MySQL
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql', # استخدم هذا حتى لو كنت تستعمل PyMySQL
+
+        # اقرأ المتغيرات من Railway، وإذا لم تجدها، استخدم القيم المحلية
+        'NAME': os.environ.get('MYSQLDATABASE', 'aya_platform_db'), # 'aya_platform_db' هو الاسم الذي اخترته محلياً
+        'USER': os.environ.get('MYSQLUSER', 'root'),             # 'root' هو المستخدم المحلي الافتراضي
+        'PASSWORD': os.environ.get('MYSQLPASSWORD', ''),         # '' (فارغ) هو الباسوورد المحلي الافتراضي
+        'HOST': os.environ.get('MYSQLHOST', '127.0.0.1'),        # '127.0.0.1' أو 'localhost'
+        'PORT': os.environ.get('MYSQLPORT', '3306'),             # '3306' هو البورت الافتراضي لـ MySQL
+    }
+}
 
 
 
