@@ -1,15 +1,20 @@
+# apps/accounts/models.py
+
+import datetime
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.templatetags.static import static
-import datetime
 
 # ==============================================================================
-# Models الأساسية (Halaqa, Surah, Profile)
+# Core Models (Halaqa, Surah, Profile)
 # ==============================================================================
 
 class Halaqa(models.Model):
-    """حلقة تحفيظ: يشارك فيها طلاب، ويشرف عليها معلم/أكثر."""
+    """
+    Represents a Quran memorization circle (Halaqa).
+    Students belong to a Halaqa, and Teachers manage it.
+    """
     name = models.CharField(max_length=150, unique=True)
     juz_from = models.PositiveSmallIntegerField(null=True, blank=True)
     juz_to = models.PositiveSmallIntegerField(null=True, blank=True)
@@ -24,7 +29,10 @@ class Halaqa(models.Model):
         return self.name
 
 class Surah(models.Model):
-    """موديل لتخزين معلومات السور لتجنب الأخطاء الإملائية."""
+    """
+    Represents a Surah in the Quran.
+    Used to validate and normalize Surah names in tasks.
+    """
     name = models.CharField(max_length=64, unique=True)
     juz_from = models.PositiveSmallIntegerField()
     juz_to = models.PositiveSmallIntegerField()
@@ -36,7 +44,9 @@ class Surah(models.Model):
         return self.name
 
 class Profile(models.Model):
-    """بروفايل المستخدم (طالب/معلّم)."""
+    """
+    Extends the built-in User model to add role-based fields (Student/Teacher).
+    """
     ROLE_STUDENT = "student"
     ROLE_TEACHER = "teacher"
     ROLE_CHOICES = ((ROLE_STUDENT, "Student"), (ROLE_TEACHER, "Teacher"))
@@ -88,20 +98,19 @@ class Profile(models.Model):
 
     def clean(self):
         super().clean()
-        # Removed auto-approval logic to allow pending state for students
-        # if self.role != self.ROLE_TEACHER:
-        #     self.teacher_status = self.TEACHER_APPROVED
 
     def save(self, *args, **kwargs):
         self.full_clean()
         return super().save(*args, **kwargs)
 
 # ==============================================================================
-# Abstract Base Classes (للمهام والتسليمات لتقليل التكرار)
+# Abstract Base Classes (Tasks & Submissions)
 # ==============================================================================
 
 class BaseTask(models.Model):
-    """موديل أساسي مجرد يحتوي على الحقول المشتركة للمهام."""
+    """
+    Abstract base model for tasks (Recitation & Review).
+    """
     created_by = models.ForeignKey(
         Profile,
         on_delete=models.PROTECT,
@@ -118,7 +127,9 @@ class BaseTask(models.Model):
         ordering = ["-deadline", "-id"]
 
 class BaseSubmission(models.Model):
-    """موديل أساسي مجرد يحتوي على الحقول المشتركة للتسليمات."""
+    """
+    Abstract base model for submissions.
+    """
     STATUS_CHOICES = [
         ("submitted", "تم التسليم"),
         ("reviewing", "قيد المراجعة"),
@@ -143,11 +154,13 @@ class BaseSubmission(models.Model):
         ordering = ["-created_at"]
 
 # ==============================================================================
-# Models الخاصة بالمهام (Recitation, Review)
+# Task Models (Recitation, Review)
 # ==============================================================================
 
 class Recitation(BaseTask):
-    """مهمة تسميع جديدة يرث حقوله من BaseTask."""
+    """
+    Represents a Recitation (Hifz) task.
+    """
     halaqa = models.ForeignKey(Halaqa, on_delete=models.CASCADE, related_name="recitations")
     created_by = models.ForeignKey(
         Profile,
@@ -160,7 +173,9 @@ class Recitation(BaseTask):
         return f"تسميع {self.surah.name} (من {self.start_ayah} إلى {self.end_ayah}) – {self.halaqa.name}"
 
 class Review(BaseTask):
-    """مهمة مراجعة جديدة ترث حقولها من BaseTask."""
+    """
+    Represents a Review (Muraja'ah) task.
+    """
     halaqa = models.ForeignKey(Halaqa, on_delete=models.CASCADE, related_name="reviews")
     created_by = models.ForeignKey(
         Profile,
@@ -173,11 +188,13 @@ class Review(BaseTask):
         return f"مراجعة {self.surah.name} – {self.halaqa.name}"
 
 # ==============================================================================
-# Models الخاصة بالتسليمات (Submissions)
+# Submission Models
 # ==============================================================================
 
 class RecitationSubmission(BaseSubmission):
-    """تسليم الطالب لمهمة تسميع."""
+    """
+    Represents a student's submission for a Recitation task.
+    """
     recitation = models.ForeignKey(Recitation, on_delete=models.CASCADE, related_name="submissions")
     student = models.ForeignKey(
         Profile,
@@ -193,7 +210,9 @@ class RecitationSubmission(BaseSubmission):
         return f"{self.student.user.username} → {self.recitation}"
 
 class ReviewSubmission(BaseSubmission):
-    """تسليم الطالب لمهمة مراجعة."""
+    """
+    Represents a student's submission for a Review task.
+    """
     review = models.ForeignKey(Review, on_delete=models.CASCADE, related_name="submissions")
     student = models.ForeignKey(
         Profile,
@@ -209,11 +228,13 @@ class ReviewSubmission(BaseSubmission):
         return f"{self.student.user.username} → {self.review}"
 
 # ==============================================================================
-# Models المساعدة (Attendance, Notification)
+# Helper Models (Attendance, Notification, PasswordReset)
 # ==============================================================================
 
 class Attendance(models.Model):
-    """موديل تسجيل الحضور والغياب."""
+    """
+    Tracks student attendance.
+    """
     STATUS_CHOICES = [("present","حاضر"),("absent","غائب"),("late","متأخر")]
     student = models.ForeignKey(Profile, on_delete=models.CASCADE, limit_choices_to={"role": Profile.ROLE_STUDENT})
     date = models.DateField()
@@ -224,7 +245,9 @@ class Attendance(models.Model):
         ordering = ["-date"]
 
 class Notification(models.Model):
-    """موديل الإشعارات."""
+    """
+    Stores system notifications for users.
+    """
     recipient = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="notifications")
     title = models.CharField(max_length=255)
     message = models.TextField()
@@ -235,6 +258,9 @@ class Notification(models.Model):
         return f"إشعار لـ {self.recipient.user.username}"
 
 class PasswordResetCode(models.Model):
+    """
+    Stores OTP codes for password reset functionality.
+    """
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='password_reset_code')
     code = models.CharField(max_length=6)
     created_at = models.DateTimeField(auto_now_add=True)

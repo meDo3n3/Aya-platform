@@ -1,7 +1,12 @@
 # hifztracker/settings.py
+
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+
+# ==============================================================================
+# 1. Base Configuration
+# ==============================================================================
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
@@ -10,6 +15,10 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-me')
 DEBUG = os.getenv('DEBUG', '1') == '1'
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 
+# ==============================================================================
+# 2. Installed Apps
+# ==============================================================================
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -17,10 +26,18 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # local apps
+    
+    # Local Apps
     'apps.accounts.apps.AccountsConfig',
     'apps.tracker',
+    
+    # Third Party Apps (if any)
+    # 'whitenoise.runserver_nostatic', 
 ]
+
+# ==============================================================================
+# 3. Middleware
+# ==============================================================================
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -34,6 +51,10 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'hifztracker.urls'
+
+# ==============================================================================
+# 4. Templates
+# ==============================================================================
 
 TEMPLATES = [
     {
@@ -51,33 +72,11 @@ TEMPLATES = [
     },
 ]
 
-
-
-
-
-
-
-allowed_hosts_string = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost')
-ALLOWED_HOSTS = allowed_hosts_string.split(',')
-
-# من Django 4+ لازم البروتوكول يكون واضح (https://)
-csrf_origins_string = os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://127.0.0.1,http://localhost')
-CSRF_TRUSTED_ORIGINS = csrf_origins_string.split(',')
-
-
-
-# طالما بتشتغل HTTPS على Railway:
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
-
-# لو السيرفر وراه بروكسي (شائع في Railway):
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-
-
-
 WSGI_APPLICATION = 'hifztracker.wsgi.application'
 
+# ==============================================================================
+# 5. Database
+# ==============================================================================
 
 # DATABASES = {
 #     'default': {
@@ -86,20 +85,21 @@ WSGI_APPLICATION = 'hifztracker.wsgi.application'
 #     }
 # }
 
+MySQL Configuration (Commented out for reference)
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql', # استخدم هذا حتى لو كنت تستعمل PyMySQL
-
-        # اقرأ المتغيرات من Railway، وإذا لم تجدها، استخدم القيم المحلية
-        'NAME': os.environ.get('MYSQLDATABASE', 'aya_platform_db'), # 'aya_platform_db' هو الاسم الذي اخترته محلياً
-        'USER': os.environ.get('MYSQLUSER', 'root'),             # 'root' هو المستخدم المحلي الافتراضي
-        'PASSWORD': os.environ.get('MYSQLPASSWORD', ''),         # '' (فارغ) هو الباسوورد المحلي الافتراضي
-        'HOST': os.environ.get('MYSQLHOST', '127.0.0.1'),        # '127.0.0.1' أو 'localhost'
-        'PORT': os.environ.get('MYSQLPORT', '3306'),             # '3306' هو البورت الافتراضي لـ MySQL
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.environ.get('MYSQLDATABASE', 'aya_platform_db'),
+        'USER': os.environ.get('MYSQLUSER', 'root'),
+        'PASSWORD': os.environ.get('MYSQLPASSWORD', ''),
+        'HOST': os.environ.get('MYSQLHOST', '127.0.0.1'),
+        'PORT': os.environ.get('MYSQLPORT', '3306'),
     }
 }
 
-
+# ==============================================================================
+# 6. Password Validation
+# ==============================================================================
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -108,21 +108,27 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
+# ==============================================================================
+# 7. Internationalization
+# ==============================================================================
+
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = os.getenv('TIME_ZONE', 'Africa/Cairo')
 USE_I18N = True
 USE_TZ = True
 
-# STATIC
+# ==============================================================================
+# 8. Static & Media Files
+# ==============================================================================
+
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# MEDIA (لرفع ملفات الشهادات)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# STORAGES: لازم نعرّف default + staticfiles في Django 5
+# Django 5 Storages Configuration
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
@@ -136,21 +142,39 @@ STORAGES = {
     },
 }
 
+# ==============================================================================
+# 9. Security & CSRF
+# ==============================================================================
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Auth redirects
+# CSRF Trusted Origins
+csrf_origins_string = os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://127.0.0.1,http://localhost')
+CSRF_TRUSTED_ORIGINS = csrf_origins_string.split(',')
+
+# Security Settings (Enable for Production/Railway)
+if not DEBUG:
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# ==============================================================================
+# 10. Authentication URLs
+# ==============================================================================
+
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = "accounts:login"
-# LOGIN_URL = "accounts:login"
+LOGIN_URL = 'accounts:login'
 
-LOGIN_URL = 'login'  # اسم ال-url لصفحة تسجيل الدخول
+# ==============================================================================
+# 11. Email Configuration
+# ==============================================================================
 
-
-# Email Backend Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+EMAIL_PORT = 465
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = True
 
-EMAIL_HOST_USER = 'muhammedelshazly.eng@gmail.com'
-EMAIL_HOST_PASSWORD = 'oibhdybmpauimiej'
+EMAIL_HOST_USER = 'ayahplatform@gmail.com'
+EMAIL_HOST_PASSWORD = 'lpswjjvbpuuwevbv'
