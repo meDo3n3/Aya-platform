@@ -13,6 +13,7 @@ urlpatterns = [
     path('forgot-password/', views.forgot_password_view, name='forgot_password'),
     path('verify-login/', views.verify_login_view, name='verify_login'),
     path('verify-code/', views.verify_reset_view, name='verify_code'),
+    path('send-registration-otp/', views.send_registration_otp, name='send_registration_otp'),
     path('go/', views.go, name='go'),
 
     # --- Student URLs ---

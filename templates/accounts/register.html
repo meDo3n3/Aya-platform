@@ -114,7 +114,25 @@
                     <input type="hidden" name="role" id="register-role" value="student" />
                     <div class="step absolute w-full" data-step="1"><div class="space-y-6 pt-2"><div class="form-input-group"><input id="full_name" name="full_name" type="text" placeholder=" " required class="form-input w-full p-4 rounded-lg bg-card dark:bg-card-dark border-2 border-border dark:border-border-dark focus:outline-none focus:ring-0 focus:border-primary placeholder-transparent text-lg"/><label for="full_name">الاسم الكامل <span class="text-error">*</span></label></div><div class="form-input-group"><input id="username" name="username" type="text" placeholder=" " required class="form-input w-full p-4 rounded-lg bg-card dark:bg-card-dark border-2 border-border dark:border-border-dark focus:outline-none focus:ring-0 focus:border-primary placeholder-transparent text-lg" pattern="[a-zA-Z0-9_]+" title="الرجاء استخدام الحروف الإنجليزية والأرقام والشرطة السفلية (_) فقط."/><label for="username">اسم المستخدم (للدخول) <span class="text-error">*</span></label></div><div class="form-input-group"><input id="email" name="email" type="email" placeholder=" " required class="form-input w-full p-4 rounded-lg bg-card dark:bg-card-dark border-2 border-border dark:border-border-dark focus:outline-none focus:ring-0 focus:border-primary placeholder-transparent text-lg"/><label for="email">البريد الإلكتروني <span class="text-error">*</span></label></div><div class="flex justify-end pt-4"><button type="button" class="next-btn w-full sm:w-auto bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-primary-light transition-colors">التالي</button></div></div></div>
                     <div class="step absolute w-full" data-step="2"><div class="space-y-6 pt-2"><div id="role-selector" class="flex border border-border dark:border-border-dark rounded-lg p-1 bg-background dark:bg-background-dark/50"><button type="button" data-role="student" class="w-1/2 py-2.5 px-4 rounded-md text-center font-bold">طالب</button><button type="button" data-role="teacher" class="w-1/2 py-2.5 px-4 rounded-md text-center font-bold">معلم</button></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-6"><div class="form-input-group"><input id="birth_date" name="birth_date" type="text" placeholder=" " onfocus="(this.type='date')" onblur="(this.type='text')" class="form-input w-full p-4 rounded-lg bg-card dark:bg-card-dark border-2 border-border dark:border-border-dark focus:outline-none focus:ring-0 focus:border-primary text-lg"/><label for="birth_date">تاريخ الميلاد <span class="text-error">*</span></label></div><div class="form-input-group"><select id="gender" name="gender" class="form-input w-full p-4 rounded-lg bg-card dark:bg-card-dark border-2 border-border dark:border-border-dark focus:outline-none focus:ring-0 focus:border-primary text-lg appearance-none"><option value="" disabled selected hidden></option><option value="male">ذكر</option><option value="female">أنثى</option></select><label for="gender">الجنس <span class="text-error">*</span></label><span class="material-symbols-outlined absolute top-1/2 left-4 -translate-y-1/2 text-text-secondary dark:text-text-secondary-dark pointer-events-none">expand_more</span></div></div><div data-role-fields="student" class="space-y-6"><div class="form-input-group"><select id="halaqa" name="halaqa" class="form-input w-full p-4 rounded-lg bg-card dark:bg-card-dark border-2 border-border dark:border-border-dark focus:outline-none focus:ring-0 focus:border-primary text-lg appearance-none"><option value="" disabled selected hidden></option>{% for h in halaqas %}<option value="{{ h.id }}">{{ h.name }}</option>{% empty %}<option value="" disabled>لا توجد حلقات متاحة</option>{% endfor %}</select><label for="halaqa">الحلقة <span class="text-error">*</span></label><span class="material-symbols-outlined absolute top-1/2 left-4 -translate-y-1/2 text-text-secondary dark:text-text-secondary-dark pointer-events-none">expand_more</span></div><div class="form-input-group"><input id="guardian_phone" name="guardian_phone" type="tel" placeholder=" " class="form-input w-full p-4 rounded-lg bg-card dark:bg-card-dark border-2 border-border dark:border-border-dark focus:outline-none focus:ring-0 focus:border-primary text-lg"/><label for="guardian_phone">رقم جوال ولي الأمر (اختياري)</label></div></div><div data-role-fields="teacher" class="hidden space-y-6"><div class="form-input-group"><input id="institution" name="institution" type="text" placeholder=" " class="form-input w-full p-4 rounded-lg bg-card dark:bg-card-dark border-2 border-border dark:border-border-dark focus:outline-none focus:ring-0 focus:border-primary text-lg"/><label for="institution">المؤسسة / الجهة (اختياري)</label></div><div class="form-input-group"><textarea id="bio" name="bio" placeholder=" " rows="2" class="form-input w-full p-4 rounded-lg bg-card dark:bg-card-dark border-2 border-border dark:border-border-dark focus:outline-none focus:ring-0 focus:border-primary text-lg"></textarea><label for="bio">نبذة قصيرة (اختياري)</label></div><div><label class="text-sm font-medium text-text-secondary dark:text-text-secondary-dark">إرفاق شهادة أو إجازة (اختياري)</label><label for="certificate" class="mt-2 flex justify-center w-full h-32 px-6 pt-5 pb-6 border-2 border-border dark:border-border-dark border-dashed rounded-md cursor-pointer hover:border-primary dark:hover:border-primary-dark transition-colors"><div class="space-y-1 text-center"><svg class="mx-auto h-12 w-12 text-text-secondary/50 dark:text-text-secondary-dark/50" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg><div class="flex text-sm text-text-secondary dark:text-text-secondary-dark"><p class="pl-1">اختر ملفًا أو اسحبه وأفلته هنا</p></div><p id="file-name" class="text-xs text-primary dark:text-primary-dark"></p></div></label><input id="certificate" name="certificate" type="file" class="sr-only" accept=".pdf,.png,.jpg,.jpeg"></div></div><div class="flex justify-between pt-4"><button type="button" class="prev-btn w-auto bg-gray-200 dark:bg-gray-700 text-text-primary dark:text-text-primary-dark font-bold py-3 px-8 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">السابق</button><button type="button" class="next-btn w-auto bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-primary-light transition-colors">التالي</button></div></div></div>
-                    <div class="step absolute w-full" data-step="3"><div class="space-y-4 pt-2"><div><div class="form-input-group"><input id="password" name="password" type="password" placeholder=" " required class="form-input w-full p-4 rounded-lg bg-card dark:bg-card-dark border-2 border-border dark:border-border-dark focus:outline-none focus:ring-0 focus:border-primary text-lg"/><label for="password">كلمة المرور <span class="text-error">*</span></label><button type="button" id="togglePassword" class="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary dark:text-text-secondary-dark"><span class="material-symbols-outlined">visibility</span></button></div><div class="mt-2 px-1"><div class="h-1 w-full bg-border dark:bg-border-dark rounded-full overflow-hidden"><div id="password-strength-bar" class="h-1 transition-all duration-300"></div></div><p id="password-strength-text" class="text-xs mt-1"></p></div></div><div><div class="form-input-group"><input id="password2" name="password2" type="password" placeholder=" " required class="form-input w-full p-4 rounded-lg bg-card dark:bg-card-dark border-2 border-border dark:border-border-dark focus:outline-none focus:ring-0 focus:border-primary text-lg"/><label for="password2">تأكيد كلمة المرور <span class="text-error">*</span></label></div><p id="password-match-text" class="text-xs mt-1 mr-2 h-4 opacity-0 transition-opacity">كلمتا المرور غير متطابقتين</p></div><div id="teacher-note" class="hidden text-center text-sm p-3 bg-blue-50 text-blue-800 border border-blue-200 rounded-lg dark:bg-info/10 dark:text-info dark:border-info/20">سيتم مراجعة حسابك كـ "معلم" من قبل الإدارة قبل التفعيل.</div><div class="flex items-start pt-4"><input id="terms" name="terms" type="checkbox" required class="h-5 w-5 mt-1 text-primary focus:ring-primary/50 border-gray-300 rounded"/><label for="terms" class="mr-3 text-sm text-text-secondary dark:text-text-secondary-dark">أوافق على <a href="#" id="terms-link" class="font-bold text-primary hover:underline">الشروط والأحكام</a>.</label></div><div class="flex justify-between pt-4"><button type="button" class="prev-btn w-auto bg-gray-200 dark:bg-gray-700 text-text-primary dark:text-text-primary-dark font-bold py-3 px-8 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">السابق</button><button id="submit-btn" type="submit" class="w-auto bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed">إنشاء الحساب</button></div></div></div>
+                    <div class="step absolute w-full" data-step="3"><div class="space-y-4 pt-2"><div><div class="form-input-group"><input id="password" name="password" type="password" placeholder=" " required class="form-input w-full p-4 rounded-lg bg-card dark:bg-card-dark border-2 border-border dark:border-border-dark focus:outline-none focus:ring-0 focus:border-primary text-lg"/><label for="password">كلمة المرور <span class="text-error">*</span></label><button type="button" id="togglePassword" class="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary dark:text-text-secondary-dark"><span class="material-symbols-outlined">visibility</span></button></div><div class="mt-2 px-1"><div class="h-1 w-full bg-border dark:bg-border-dark rounded-full overflow-hidden"><div id="password-strength-bar" class="h-1 transition-all duration-300"></div></div><p id="password-strength-text" class="text-xs mt-1"></p></div></div><div><div class="form-input-group"><input id="password2" name="password2" type="password" placeholder=" " required class="form-input w-full p-4 rounded-lg bg-card dark:bg-card-dark border-2 border-border dark:border-border-dark focus:outline-none focus:ring-0 focus:border-primary text-lg"/><label for="password2">تأكيد كلمة المرور <span class="text-error">*</span></label></div><p id="password-match-text" class="text-xs mt-1 mr-2 h-4 opacity-0 transition-opacity">كلمتا المرور غير متطابقتين</p></div><div id="teacher-note" class="hidden text-center text-sm p-3 bg-blue-50 text-blue-800 border border-blue-200 rounded-lg dark:bg-info/10 dark:text-info dark:border-info/20">سيتم مراجعة حسابك كـ "معلم" من قبل الإدارة قبل التفعيل.</div>
+                    
+                    <!-- OTP Section -->
+                    <div class="space-y-4">
+                        <button type="button" id="send-otp-btn" class="w-full bg-primary/10 text-primary border-2 border-primary/20 font-bold py-3 px-8 rounded-lg hover:bg-primary/20 transition-colors flex items-center justify-center">
+                            <span class="material-symbols-outlined ml-2">mail</span> إرسال رمز التحقق للبريد الإلكتروني
+                        </button>
+                        
+                        <div id="otp-section" class="hidden space-y-4">
+                            <div class="form-input-group relative">
+                                <input id="otp" name="otp" type="text" placeholder=" " class="form-input w-full p-4 rounded-lg bg-card dark:bg-card-dark border-2 border-border dark:border-border-dark focus:outline-none focus:ring-2 focus:ring-primary/50 text-2xl text-center tracking-[1em] font-mono font-bold" maxlength="6" pattern="\d{6}" title="يرجى إدخال 6 أرقام"/>
+                                <label for="otp" class="w-full text-center text-sm text-text-secondary dark:text-text-secondary-dark -mt-2">أدخل الرمز المكون من 6 أرقام</label>
+                            </div>
+                            <p class="text-xs text-center text-text-secondary dark:text-text-secondary-dark">تم إرسال الرمز إلى بريدك الإلكتروني. يرجى التحقق من الرسائل الواردة (أو البريد العشوائي).</p>
+                        </div>
+                    </div>
+                    <!-- End OTP Section -->
+
+                    <div class="flex items-start pt-4"><input id="terms" name="terms" type="checkbox" required class="h-5 w-5 mt-1 text-primary focus:ring-primary/50 border-gray-300 rounded"/><label for="terms" class="mr-3 text-sm text-text-secondary dark:text-text-secondary-dark">أوافق على <a href="#" id="terms-link" class="font-bold text-primary hover:underline">الشروط والأحكام</a>.</label></div><div class="flex justify-between pt-4"><button type="button" class="prev-btn w-auto bg-gray-200 dark:bg-gray-700 text-text-primary dark:text-text-primary-dark font-bold py-3 px-8 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">السابق</button><button id="submit-btn" type="submit" class="w-auto bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed">إنشاء الحساب</button></div></div></div>
                 </form>
             </div>
             <div class="flex-shrink-0">
@@ -176,6 +194,14 @@ document.addEventListener('DOMContentLoaded', function() {
     ];
     let contentIndex = 0;
 
+    const updateFormHeight = () => {
+        const activeStepElement = form.querySelector('.step.active');
+        if (activeStepElement) {
+            const contentHeight = activeStepElement.firstElementChild.scrollHeight;
+            form.style.minHeight = `${contentHeight}px`;
+        }
+    };
+
     const updateUI = () => {
         if (currentStep === 2) {
             formContainer.classList.add('flex', 'flex-col', 'h-full', 'max-h-[95vh]');
@@ -196,20 +222,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 indicatorDiv.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-text-secondary', 'dark:text-text-secondary-dark');
             }
         });
-        let activeStepElement = null;
         steps.forEach(step => {
             if (parseInt(step.dataset.step) === currentStep) {
                 step.classList.remove('anim-out');
                 step.classList.add('active', 'anim-in');
-                activeStepElement = step;
             } else {
                 step.classList.remove('active', 'anim-in');
             }
         });
-        if (activeStepElement) {
-            const contentHeight = activeStepElement.firstElementChild.scrollHeight;
-            form.style.minHeight = `${contentHeight}px`;
-        }
+        updateFormHeight();
     };
 
     const validateStep = (stepNumber) => {
@@ -325,7 +346,8 @@ document.addEventListener('DOMContentLoaded', function() {
             matchText.classList.add('opacity-0');
             passwordsMatch = true;
         }
-        submitBtn.disabled = !(passwordStrengthScore >= 3 && passwordsMatch);
+        // Update height as match text visibility might change
+        updateFormHeight();
     };
 
     passwordInput.addEventListener('input', function() {
@@ -358,6 +380,8 @@ document.addEventListener('DOMContentLoaded', function() {
             strengthText.className = `text-xs mt-1 ${strength.textColor}`;
         }
         checkPasswords();
+        // Update height as strength text might change line count
+        updateFormHeight();
     });
     password2Input.addEventListener('input', checkPasswords);
 
@@ -404,9 +428,88 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 500); 
     }
     
+    const sendOtpBtn = document.getElementById('send-otp-btn');
+    const otpSection = document.getElementById('otp-section');
+    const otpInput = document.getElementById('otp');
+    const emailInput = document.getElementById('email');
+
+    // Initial State for Step 3
+    submitBtn.disabled = true;
+    submitBtn.classList.remove('hidden'); // Always show it in Step 3, just disabled
+
+    const checkStep3Validity = () => {
+        const pass1 = passwordInput.value;
+        const pass2 = password2Input.value;
+        const otp = otpInput.value;
+        const terms = document.getElementById('terms').checked;
+        
+        const isPassValid = pass1 && pass2 && pass1 === pass2 && passwordStrengthScore >= 3;
+        const isOtpValid = otp && otp.length === 6;
+        
+        // Enable submit only if all valid
+        submitBtn.disabled = !(isPassValid && isOtpValid && terms);
+    };
+
+    // Add listeners for validity
+    passwordInput.addEventListener('input', checkStep3Validity);
+    password2Input.addEventListener('input', checkStep3Validity);
+    otpInput.addEventListener('input', checkStep3Validity);
+    document.getElementById('terms').addEventListener('change', checkStep3Validity);
+
+    if (sendOtpBtn) {
+        sendOtpBtn.addEventListener('click', function() {
+            const email = emailInput.value;
+            if (!email) {
+                Swal.fire({ icon: 'warning', title: 'تنبيه', text: 'يرجى إدخال البريد الإلكتروني في الخطوة الأولى.', confirmButtonColor: '#f59e0b' });
+                return;
+            }
+            
+            sendOtpBtn.disabled = true;
+            const originalText = sendOtpBtn.innerHTML;
+            sendOtpBtn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white inline-block ml-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> جاري الإرسال...`;
+
+            const formData = new FormData();
+            formData.append('email', email);
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+            fetch("{% url 'accounts:send_registration_otp' %}", {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    Swal.fire({ icon: 'success', title: 'تم الإرسال', text: data.message, confirmButtonColor: '#386641' });
+                    otpSection.classList.remove('hidden');
+                    otpSection.classList.add('animate-fade-in');
+                    sendOtpBtn.classList.add('hidden'); // Hide "Send OTP" after success
+                    otpInput.focus();
+                    updateFormHeight(); // Update height for OTP section
+                } else {
+                    Swal.fire({ icon: 'error', title: 'خطأ', text: data.message, confirmButtonColor: '#e63946' });
+                    sendOtpBtn.disabled = false;
+                    sendOtpBtn.innerHTML = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({ icon: 'error', title: 'خطأ', text: 'حدث خطأ أثناء الاتصال بالخادم.', confirmButtonColor: '#e63946' });
+                sendOtpBtn.disabled = false;
+                sendOtpBtn.innerHTML = originalText;
+            });
+        });
+    }
+
     form.addEventListener('submit', function(event) {
         event.preventDefault(); 
         if (!validateStep(currentStep)) return;
+        
+        if (!otpInput.value) {
+             Swal.fire({ icon: 'warning', title: 'تنبيه', text: 'يرجى إدخال رمز التحقق.', confirmButtonColor: '#f59e0b' });
+             return;
+        }
+
         submitBtn.disabled = true;
         submitBtn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>جاري الإنشاء...</span>`;
         const formData = new FormData(form);
@@ -431,6 +534,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .finally(() => {
             submitBtn.disabled = false;
             submitBtn.textContent = 'إنشاء الحساب';
+            checkStep3Validity(); // Re-check validity to ensure button state is correct
         });
     });
 

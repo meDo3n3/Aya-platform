@@ -101,7 +101,7 @@ def login_view(request):
         if not user_obj.is_active:
             if hasattr(user_obj, 'profile'):
                 if user_obj.profile.teacher_status == Profile.TEACHER_PENDING:
-                    messages.warning(request, "لم يتم الموافقة عليك حتى الآن.")
+                    messages.warning(request, "لم يتم الموافقة على طلب إنشاء الحساب.")
                 elif user_obj.profile.teacher_status == Profile.TEACHER_REJECTED:
                     messages.error(request, "عذراً، تم رفض طلب انضمامك.")
                     user_obj.delete()
@@ -264,6 +264,33 @@ def register_view(request):
                 for error in errors: messages.error(request, error)
                 return render(request, "accounts/register.html", ctx())
 
+        # --- OTP Verification Check ---
+        session_otp = request.session.get('registration_otp')
+        session_email = request.session.get('registration_email')
+        submitted_otp = request.POST.get('otp')
+
+        if not session_otp or not session_email or not submitted_otp:
+             if is_ajax:
+                return JsonResponse({'status': 'error', 'message': "يرجى التحقق من البريد الإلكتروني أولاً."}, status=400)
+             else:
+                messages.error(request, "يرجى التحقق من البريد الإلكتروني أولاً.")
+                return render(request, "accounts/register.html", ctx())
+
+        if session_email != email:
+             if is_ajax:
+                return JsonResponse({'status': 'error', 'message': "البريد الإلكتروني لا يطابق البريد الذي تم التحقق منه."}, status=400)
+             else:
+                messages.error(request, "البريد الإلكتروني لا يطابق البريد الذي تم التحقق منه.")
+                return render(request, "accounts/register.html", ctx())
+
+        if str(session_otp) != str(submitted_otp):
+             if is_ajax:
+                return JsonResponse({'status': 'error', 'message': "رمز التحقق غير صحيح."}, status=400)
+             else:
+                messages.error(request, "رمز التحقق غير صحيح.")
+                return render(request, "accounts/register.html", ctx())
+        # ------------------------------
+
         with transaction.atomic():
             user = User.objects.create_user(username=username, email=email, password=pw1, first_name=full_name.split()[0], last_name=" ".join(full_name.split()[1:]))
             
@@ -287,6 +314,10 @@ def register_view(request):
                 profile.certificate = certificate
             
             profile.save()
+            
+            # Clear session OTP
+            if 'registration_otp' in request.session: del request.session['registration_otp']
+            if 'registration_email' in request.session: del request.session['registration_email']
 
         if is_ajax:
             return JsonResponse({'status': 'success', 'role': role})
@@ -301,6 +332,40 @@ def register_view(request):
             return JsonResponse({'status': 'error', 'message': error_message}, status=500)
         messages.error(request, error_message)
         return render(request, "accounts/register.html", ctx())
+
+
+@require_POST
+def send_registration_otp(request):
+    """
+    Sends an OTP to the provided email for registration verification.
+    """
+    email = request.POST.get("email", "").strip().lower()
+    if not email:
+        return JsonResponse({'status': 'error', 'message': 'البريد الإلكتروني مطلوب.'}, status=400)
+
+    if User.objects.filter(email__iexact=email).exists():
+        return JsonResponse({'status': 'error', 'message': 'البريد الإلكتروني مسجل من قبل.'}, status=400)
+
+    try:
+        otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+        
+        # Store in session
+        request.session['registration_otp'] = otp
+        request.session['registration_email'] = email
+        request.session.set_expiry(600) # 10 minutes
+
+        send_mail(
+            subject='رمز التحقق للتسجيل',
+            message=f'رمز التحقق الخاص بك هو: {otp}',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+        return JsonResponse({'status': 'success', 'message': 'تم إرسال رمز التحقق إلى بريدك الإلكتروني.'})
+    except Exception as e:
+        print(f"OTP Send Error: {e}")
+        return JsonResponse({'status': 'error', 'message': 'حدث خطأ أثناء إرسال الرمز. يرجى المحاولة لاحقاً.'}, status=500)
+
 
 
 def forgot_password_view(request):
@@ -399,13 +464,73 @@ def student_dashboard(request):
     
     # 1. Attendance
     Attendance.objects.get_or_create(student=profile, date=today, defaults={"status": "present"})
-    start_date = today - timedelta(days=6)
-    existing_attendance = Attendance.objects.filter(student=profile, date__gte=start_date, date__lte=today)
-    attendance_map = {att.date: att for att in existing_attendance}
-    week_attendance = []
-    for i in range(7):
-        day_date = start_date + timedelta(days=i)
-        week_attendance.append(attendance_map.get(day_date, types.SimpleNamespace(date=day_date, status=None)))
+    
+    # --- Term-Based Attendance Logic ---
+    def get_term_dates(current_date):
+        year = current_date.year
+        
+        # Term 1: Aug 24 - Jan 8
+        # Term 2: Jan 18 - Jun 25
+        
+        # Check if in Term 1 (Aug 24 - Dec 31)
+        if date(year, 8, 24) <= current_date <= date(year, 12, 31):
+            return date(year, 8, 24), date(year + 1, 1, 8)
+            
+        # Check if in Term 1 (Jan 1 - Jan 8)
+        elif date(year, 1, 1) <= current_date <= date(year, 1, 8):
+            return date(year - 1, 8, 24), date(year, 1, 8)
+            
+        # Check if in Break 1 (Jan 9 - Jan 17) -> Show Term 1 Final
+        elif date(year, 1, 9) <= current_date <= date(year, 1, 17):
+            return date(year - 1, 8, 24), date(year, 1, 8)
+            
+        # Check if in Term 2 (Jan 18 - Jun 25)
+        elif date(year, 1, 18) <= current_date <= date(year, 6, 25):
+            return date(year, 1, 18), date(year, 6, 25)
+            
+        # Check if in Break 2 (Jun 26 - Aug 23) -> Show Term 2 Final
+        # Note: This covers the rest of the year until next Term 1 starts
+        else:
+            # If we are past Jun 25 but before Aug 24, we show Term 2 results
+            return date(year, 1, 18), date(year, 6, 25)
+
+    term_start, term_end = get_term_dates(today)
+    
+    # Calculate Effective Range
+    # Start from the LATER of: Term Start OR User Join Date
+    user_join_date = request.user.date_joined.date()
+    calc_start_date = max(term_start, user_join_date)
+    
+    # End at the EARLIER of: Term End OR Today
+    calc_end_date = min(term_end, today)
+    
+    # If user joined after the calculation period (e.g. joined in break), 
+    # or if calc_start > calc_end, we handle gracefully.
+    if calc_start_date > calc_end_date:
+        presence_pct = 100 # Default for new students before term starts
+        week_attendance = []
+    else:
+        # Fetch attendance records in range
+        term_attendance = Attendance.objects.filter(student=profile, date__range=(calc_start_date, calc_end_date))
+        
+        # Calculate total days in range (inclusive)
+        total_days = (calc_end_date - calc_start_date).days + 1
+        
+        # Count present days
+        present_days_count = term_attendance.filter(status='present').count()
+        
+        # Calculate Percentage
+        presence_pct = round((present_days_count / total_days) * 100) if total_days > 0 else 100
+
+        # For the UI week view (last 7 days)
+        start_date_week = today - timedelta(days=6)
+        existing_attendance = Attendance.objects.filter(student=profile, date__gte=start_date_week, date__lte=today)
+        attendance_map = {att.date: att for att in existing_attendance}
+        week_attendance = []
+        for i in range(7):
+            day_date = start_date_week + timedelta(days=i)
+            week_attendance.append(attendance_map.get(day_date, types.SimpleNamespace(date=day_date, status=None)))
+    # -----------------------------------
 
     # 2. Fetch Tasks
     student_join_date = request.user.date_joined
@@ -451,8 +576,7 @@ def student_dashboard(request):
     total_score = (all_graded_recitations.aggregate(total=Sum('score'))['total'] or 0) + (all_graded_reviews.aggregate(total=Sum('score'))['total'] or 0)
     accuracy_pct = round((total_score / (count_graded * 10)) * 100) if count_graded > 0 else 0
     
-    present_days = sum(1 for a in week_attendance if a.status == "present")
-    presence_pct = round((present_days / 7) * 100) if week_attendance else 0
+    # Removed old presence calculation
     
     successful_recitations = RecitationSubmission.objects.filter(student=profile, status="graded", score__gte=5).select_related('recitation__surah')
     ayah_count = sum((s.recitation.end_ayah - s.recitation.start_ayah + 1) for s in successful_recitations if s.recitation and s.recitation.start_ayah and s.recitation.end_ayah)
