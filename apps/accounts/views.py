@@ -230,27 +230,34 @@ def register_view(request):
         messages.error(request, error_message)
         return render(request, "accounts/register.html", ctx())
 
+
 def forgot_password_view(request):
     if request.method == 'POST':
         email = request.POST.get('email')
         try:
             user = User.objects.get(email=email)
             otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+            
             PasswordResetCode.objects.update_or_create(
                 user=user, defaults={'code': otp, 'created_at': timezone.now()}
             )
+            
+            # --- التعديل هنا ---
             send_mail(
-                'Password Reset OTP',
-                f'Your OTP for password reset is: {otp}',
-                settings.EMAIL_HOST_USER,
-                [email],
+                subject='Password Reset OTP',
+                message=f'Your OTP for password reset is: {otp}',
+                from_email=settings.DEFAULT_FROM_EMAIL,  # استخدمنا الإيميل الافتراضي بدلاً من EMAIL_HOST_USER
+                recipient_list=[email],
                 fail_silently=False,
             )
+            # ------------------
+
             request.session['reset_email'] = email
             return redirect('accounts:verify_code')
         except User.DoesNotExist:
             messages.error(request, 'البريد الإلكتروني غير موجود.')
     return render(request, 'accounts/forgot_password.html')
+
 
 def verify_reset_view(request):
     email = request.session.get('reset_email')

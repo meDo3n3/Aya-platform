@@ -30,7 +30,7 @@ INSTALLED_APPS = [
     # Local Apps
     'apps.accounts.apps.AccountsConfig',
     'apps.tracker',
-    
+    'anymail',  # أضف هذا السطر
     # Third Party Apps (if any)
     # 'whitenoise.runserver_nostatic', 
 ]
@@ -336,11 +336,18 @@ LOGIN_URL = 'accounts:login'
 # 11. Email Configuration
 # ==============================================================================
 
-EMAIL_BACKEND = 'hifztracker.email_backend.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
-EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False') == 'True'
+EMAIL_BACKEND = "anymail.backends.resend.EmailBackend"
 
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'ayahplatform@gmail.com')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'lpswjjvbpuuwevbv')
+ANYMAIL = {
+    "RESEND_API_KEY": os.getenv('RESEND_API_KEY'),
+}
+
+DEFAULT_FROM_EMAIL = "onboarding@resend.dev"  # أو الدومين الخاص بك إذا ربطت
+
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+# EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+# EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False') == 'True'
+
+# EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'ayahplatform@gmail.com')
+# EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'lpswjjvbpuuwevbv')
