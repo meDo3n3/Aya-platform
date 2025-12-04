@@ -342,7 +342,9 @@ ANYMAIL = {
     "RESEND_API_KEY": os.getenv('RESEND_API_KEY'),
 }
 
-DEFAULT_FROM_EMAIL = "onboarding@resend.dev"  # أو الدومين الخاص بك إذا ربطت
+DEFAULT_FROM_EMAIL = "info@almubde.com"  # أو الدومين الخاص بك إذا ربطت
+
+SERVER_EMAIL = "info@almubde.com"
 
 # EMAIL_HOST = 'smtp.gmail.com'
 # EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
