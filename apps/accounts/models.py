@@ -270,3 +270,19 @@ class PasswordResetCode(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.code}"
+
+class LoginVerificationCode(models.Model):
+    """
+    Stores OTP codes for login verification (2FA).
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='login_verification_code')
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    attempts = models.PositiveSmallIntegerField(default=0)
+
+    def is_valid(self):
+        # Code is valid for 10 minutes
+        return self.created_at >= timezone.now() - datetime.timedelta(minutes=10)
+
+    def __str__(self):
+        return f"Login OTP for {self.user.username}: {self.code}"

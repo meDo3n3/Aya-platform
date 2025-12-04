@@ -34,7 +34,8 @@ from .models import (
     Profile, Halaqa, Surah,
     Recitation, RecitationSubmission,
     Review, ReviewSubmission,
-    Attendance, Notification, PasswordResetCode
+    Attendance, Notification, PasswordResetCode,
+    LoginVerificationCode
 )
 
 User = get_user_model()
@@ -66,6 +67,7 @@ def login_view(request):
     """
     Handles user login for both students and teachers.
     Checks for active status and teacher approval status.
+    Initiates 2FA verification.
     """
     if request.user.is_authenticated:
         if hasattr(request.user, "profile"):
@@ -118,13 +120,83 @@ def login_view(request):
             messages.error(request, "كلمة المرور غير صحيحة." if DETAILED else "بيانات الدخول غير صحيحة.")
             return render(request, "accounts/login.html", {"selected_role": role})
 
-        login(request, user)
-        request.session.set_expiry(1209600 if remember_me else 0)
+        # 2FA Logic
+        otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+        LoginVerificationCode.objects.update_or_create(
+            user=user,
+            defaults={'code': otp, 'created_at': timezone.now(), 'attempts': 0}
+        )
 
-        return redirect("accounts:teacher_dashboard" if profile.role == Profile.ROLE_TEACHER
-                        else "accounts:student_dashboard")
+        try:
+            send_mail(
+                subject='رمز التحقق للدخول',
+                message=f'رمز التحقق الخاص بك هو: {otp}',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            messages.error(request, "حدث خطأ أثناء إرسال رمز التحقق. يرجى المحاولة لاحقاً.")
+            return render(request, "accounts/login.html", {"selected_role": role})
+
+        request.session['pending_user_id'] = user.id
+        request.session['remember_me'] = True if remember_me else False
+        return redirect('accounts:verify_login')
 
     return render(request, "accounts/login.html", {"selected_role": "student"})
+
+
+def verify_login_view(request):
+    user_id = request.session.get('pending_user_id')
+    if not user_id:
+        return redirect('accounts:login')
+
+    user = get_object_or_404(User, id=user_id)
+    
+    if request.method == 'POST':
+        code = request.POST.get('code')
+        try:
+            verification = user.login_verification_code
+            
+            if verification.code == code and verification.is_valid():
+                # Success
+                login(request, user)
+                verification.delete()
+                del request.session['pending_user_id']
+                
+                remember_me = request.session.pop('remember_me', False)
+                request.session.set_expiry(1209600 if remember_me else 0)
+
+                return redirect("accounts:teacher_dashboard" if user.profile.role == Profile.ROLE_TEACHER
+                                else "accounts:student_dashboard")
+            else:
+                verification.attempts += 1
+                verification.save()
+                
+                if verification.attempts >= 3:
+                    # Generate new code
+                    new_otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+                    verification.code = new_otp
+                    verification.created_at = timezone.now()
+                    verification.attempts = 0
+                    verification.save()
+                    
+                    send_mail(
+                        subject='رمز تحقق جديد للدخول',
+                        message=f'لقد تم تجاوز عدد المحاولات المسموح بها. رمز التحقق الجديد هو: {new_otp}',
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[user.email],
+                        fail_silently=False,
+                    )
+                    messages.error(request, "تم إرسال رمز جديد إلى بريدك الإلكتروني بسبب تجاوز عدد المحاولات.")
+                else:
+                    messages.error(request, f"الرمز غير صحيح. محاولة {verification.attempts} من 3.")
+                    
+        except LoginVerificationCode.DoesNotExist:
+            messages.error(request, "حدث خطأ. يرجى تسجيل الدخول مرة أخرى.")
+            return redirect('accounts:login')
+
+    return render(request, 'accounts/verify_login.html', {'email': user.email})
 
 def logout_view(request):
     logout(request)
