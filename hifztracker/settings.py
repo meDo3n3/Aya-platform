@@ -78,24 +78,24 @@ WSGI_APPLICATION = 'hifztracker.wsgi.application'
 # 5. Database
 # ==============================================================================
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
-# MySQL Configuration (Commented out for reference)
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get('MYSQLDATABASE', 'aya_platform_db'),
-        'USER': os.environ.get('MYSQLUSER', 'root'),
-        'PASSWORD': os.environ.get('MYSQLPASSWORD', ''),
-        'HOST': os.environ.get('MYSQLHOST', '127.0.0.1'),
-        'PORT': os.environ.get('MYSQLPORT', '3306'),
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# MySQL Configuration (Commented out for reference)
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': os.environ.get('MYSQLDATABASE', 'aya_platform_db'),
+#         'USER': os.environ.get('MYSQLUSER', 'root'),
+#         'PASSWORD': os.environ.get('MYSQLPASSWORD', ''),
+#         'HOST': os.environ.get('MYSQLHOST', '127.0.0.1'),
+#         'PORT': os.environ.get('MYSQLPORT', '3306'),
+#     }
+# }
 
 # ==============================================================================
 # 6. Password Validation
