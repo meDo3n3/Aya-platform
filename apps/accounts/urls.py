@@ -1,4 +1,5 @@
 # apps/accounts/urls.py
+# Updated for 2FA
 from django.urls import path
 from . import views
 
@@ -10,6 +11,7 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('register/', views.register_view, name='register'),
     path('forgot-password/', views.forgot_password_view, name='forgot_password'),
+    path('verify-login/', views.verify_login_view, name='verify_login'),
     path('verify-code/', views.verify_reset_view, name='verify_code'),
     path('go/', views.go, name='go'),
 
