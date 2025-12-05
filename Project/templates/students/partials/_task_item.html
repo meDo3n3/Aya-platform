@@ -1,0 +1,117 @@
+{% load static custom_filters %}
+<div class="task-item bg-card dark:bg-card-dark rounded-xl shadow-subtle border border-border-color dark:border-border-color-dark transition-all duration-300 hover:shadow-lifted hover:-translate-y-1" 
+    id="task-item-{{ task.id }}" 
+    data-task-type="{{ task.type }}"
+    data-created-at="{{ task.created_at.isoformat }}"
+    data-deadline="{{ task.deadline|date:'c'|default:'9999-12-31T23:59:59+00:00' }}"
+    data-score="{{ sub.score|default:'-1' }}">
+
+    <div class="task-header flex items-start justify-between p-4 cursor-pointer">
+        <div class="flex items-center gap-4">
+            <div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center 
+                {% if task.type == 'recitation' %}bg-primary/10{% else %}bg-secondary/10{% endif %}">
+                <span class="material-symbols-outlined 
+                    {% if task.type == 'recitation' %}text-primary dark:text-success{% else %}text-secondary{% endif %}">
+                    {% if task.type == 'recitation' %}mic{% else %}history{% endif %}
+                </span>
+            </div>
+            <div>
+                <p class="font-bold text-text-primary dark:text-text-primary-dark">{{ task.surah }}{% if task.start_ayah and task.end_ayah %}: {{ task.start_ayah }} - {{ task.end_ayah }}{% endif %}</p>
+                <div class="text-sm text-text-secondary dark:text-text-secondary-dark flex items-center gap-4 mt-1 flex-wrap">
+                    <div class="flex items-center gap-1.5" title="الموعد النهائي">
+                        <span class="material-symbols-outlined text-base">event</span>
+                        <span>{{ task.deadline|arabic_timesince }}</span>
+                    </div>
+                    <div class="flex items-center gap-1.5" title="أُضيفت بواسطة المعلم">
+                        <span class="material-symbols-outlined text-base">person</span>
+                        <span>{{ task.created_by.user.username }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center gap-3 flex-shrink-0">
+            {% if sub.status == "graded" and sub.score >= 5 %}
+                <div class="hidden sm:flex items-center gap-2 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-green-600 dark:text-green-400">
+                    <span>مكتمل</span>
+                    <span class="font-mono">({{ sub.score|floatformat:1 }}/10)</span>
+                </div>
+                <span class="material-symbols-outlined text-text-secondary dark:text-text-secondary-dark transition-transform arrow-icon">expand_more</span>
+
+            {% elif sub.status == "submitted" %}
+                <div class="flex items-center gap-2 rounded-lg bg-warning/10 py-2 px-4 text-sm font-bold text-warning cursor-default">
+                    <span class="material-symbols-outlined text-base">hourglass_top</span>
+                    <span class="hidden sm:inline">قيد المراجعة</span>
+                </div>
+
+            {% else %}
+                {% if task.is_late %}
+                    <div class="hidden sm:flex items-center gap-1 text-danger text-xs font-bold" title="متأخر">
+                        <span class="material-symbols-outlined text-base">schedule</span>
+                        <span>متأخر</span>
+                    </div>
+                {% endif %}
+                <button class="open-recitation flex items-center justify-center gap-2 rounded-lg bg-primary py-2.5 px-4 text-sm font-bold text-white hover:bg-primary/90 transition"
+                    data-task-id="{{ task.id }}"
+                    data-title="{% if task.type == 'recitation' %}تسميع{% else %}مراجعة{% endif %}: {{ task.surah }}"
+                    data-submit-url="{% url 'accounts:submit_task' task_type=task.type task_id=task.id %}">
+                    <span>{% if sub %}إعادة المحاولة{% else %}ابدأ{% endif %}</span>
+                </button>
+
+            {% endif %}
+        </div>
+    </div>
+
+    {% if sub and sub.status == 'graded' and sub.score < 5 %}
+    <div class="border-t border-border-color dark:border-border-color-dark p-4">
+        <div class="bg-danger/10 text-danger dark:text-red-400 p-3 rounded-lg text-sm space-y-2">
+            <div class="font-bold flex items-center gap-2">
+                <span class="material-symbols-outlined text-base" style="font-variation-settings: 'FILL' 1;">error</span>
+                <span>مطلوب إعادة المحاولة (الدرجة: {{ sub.score|floatformat:1 }}/10)</span>
+            </div>
+            {% if sub.notes %}
+                <p><b class="font-semibold text-danger/80 dark:text-red-300">ملاحظات المعلم:</b> {{ sub.notes }}</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if sub.status == "graded" and sub.score >= 5 %}
+    <div class="details-content" id="details-{{ task.id }}">
+        <div class="border-t border-border-color dark:border-border-color-dark p-4 space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                <div>
+                    <span class="font-semibold text-text-secondary dark:text-text-secondary-dark">دقة الحفظ:</span>
+                    <div class="flex items-center gap-2 mt-1">
+                        <div class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div class="h-full bg-primary dark:bg-success rounded-full" style="width: {{ sub.hifdh_percentage }}%;"></div>
+                        </div>
+                        <span class="font-bold text-primary dark:text-success">{{ sub.hifdh|default:"—" }}/5</span>
+                    </div>
+                </div>
+                <div>
+                    <span class="font-semibold text-text-secondary dark:text-text-secondary-dark">صحة الأحكام:</span>
+                    <div class="flex items-center gap-2 mt-1">
+                        <div class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div class="h-full bg-secondary rounded-full" style="width: {{ sub.rules_percentage }}%;"></div>
+                        </div>
+                        <span class="font-bold text-secondary">{{ sub.rules|default:"—" }}/5</span>
+                    </div>
+                </div>
+            </div>
+            <div class="text-xs text-text-secondary dark:text-text-secondary-dark flex flex-wrap gap-x-4 gap-y-1">
+                <span><b>تاريخ التسليم:</b> {{ sub.created_at|date:"Y/m/d - H:i" }}</span>
+                <span><b>تاريخ التصحيح:</b> {{ sub.updated_at|date:"Y/m/d - H:i" }}</span>
+                <span><b>المصحح:</b> {{ task.created_by.user.username }}</span>
+            </div>
+            {% if sub.notes %}
+                <p class="text-sm text-text-secondary dark:text-text-secondary-dark bg-background dark:bg-background-dark p-3 rounded-md"><b class="text-text-primary dark:text-text-primary-dark">ملاحظات المعلم:</b> {{ sub.notes }}</p>
+            {% endif %}
+            <a href="{% url 'accounts:recitation_record' task_type=task.type task_id=task.id %}"
+            class="w-full block text-center text-sm font-bold text-primary dark:text-success hover:underline mt-2">
+            إعادة المحاولة
+            </a>
+
+        </div>
+    </div>
+    {% endif %}
+</div>

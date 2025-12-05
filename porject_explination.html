@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شرح مشروع HifzTracker</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+            background: #fff;
+        }
+        h1 { color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; border-bottom-color: #3498db; }
+        h2 { color: #2980b9; margin-top: 30px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        h3 { color: #16a085; margin-top: 25px; }
+        code { background: #f4f4f4; padding: 2px 5px; border-radius: 3px; font-family: Consolas, Monaco, monospace; color: #c0392b; direction: ltr; display: inline-block; }
+        ul, ol { padding-right: 20px; }
+        li { margin-bottom: 8px; }
+        .folder-icon { font-size: 1.2em; margin-left: 5px; }
+        strong { color: #2c3e50; }
+        @media print {
+            body { padding: 0; max-width: 100%; }
+            a { text-decoration: none; color: #000; }
+        }
+    </style>
+</head>
+<body>
+    <h1>شرح مشروع HifzTracker</h1>
+    <p>أهلاً بك! هذا الملف يحتوي على شرح مفصل ومبسط لمشروع <code>HifzTracker</code>، وكيف تعمل الملفات مع بعضها البعض لبناء النظام بالكامل.</p>
+    <h2>1. نظرة عامة على المشروع (Overview)</h2>
+    <p>المشروع عبارة عن منصة <strong>لتسميع ومراجعة القرآن الكريم</strong> (Hifz Tracker).<br>
+    مبني باستخدام إطار عمل <strong>Django</strong> (بايثون).<br>
+    الهدف الأساسي منه هو الربط بين <strong>الطلاب</strong> و <strong>المعلمين</strong> في حلقات تحفيظ، حيث يقوم المعلم بتعيين مهام (تسميع أو مراجعة)، ويقوم الطالب بتسجيل صوته ورفعه، ثم يقوم المعلم بالتصحيح.</p>
+    <h2>2. الهيكل العام للمجلدات (Folder Structure)</h2>
+    <p>المشروع مقسم لمجلدات رئيسية، كل مجلد له وظيفة محددة:</p>
+    <h3>📁 <code>hifztracker/</code> (مجلد الإعدادات الرئيسي)</h3>
+    <p>هذا هو "عقل" المشروع، ويحتوي على الإعدادات العامة.</p>
+    <ul>
+        <li><strong><code>settings.py</code></strong>: ملف الإعدادات. فيه نحدد قاعدة البيانات، التطبيقات المثبتة (Installed Apps)، إعدادات البريد الإلكتروني، واللغة.</li>
+        <li><strong><code>urls.py</code></strong>: "موجه المرور" الرئيسي. أي رابط يطلبه المستخدم (مثل <code>/login</code> أو <code>/dashboard</code>) يمر من هنا أولاً ليتم توجيهه للتطبيق المناسب.</li>
+        <li><strong><code>wsgi.py</code> / <code>asgi.py</code></strong>: ملفات تستخدم عند رفع الموقع على السيرفر (Production) ليعمل مع خوادم الويب.</li>
+    </ul>
+    <h3>📁 <code>apps/</code> (التطبيقات)</h3>
+    <p>هنا يوجد "اللحم والعظم" للمشروع. تم تقسيم الكود لتطبيقات صغيرة لتنظيمه.<br>
+    يحتوي الآن على التطبيق الأساسي:</p>
+    <ol>
+        <li><strong><code>accounts</code></strong>: يدير المستخدمين، الحلقات، المهام، والتسليمات. هو المحرك الأساسي للمنصة.</li>
+    </ol>
+    <h3>📁 <code>templates/</code> (القوالب)</h3>
+    <p>يحتوي على ملفات <strong>HTML</strong>. هي الصفحات التي يراها المستخدم (واجهة الموقع).</p>
+    <ul>
+        <li><code>accounts/</code>: صفحات الدخول والتسجيل.</li>
+        <li><code>students/</code>: لوحة تحكم الطالب.</li>
+        <li><code>teachers/</code>: لوحة تحكم المعلم.</li>
+    </ul>
+    <h3>📁 <code>static/</code> و <code>media/</code></h3>
+    <ul>
+        <li><strong><code>static</code></strong>: ملفات التصميم (CSS)، الجافاسكريبت (JS)، والصور الثابتة (اللوجو مثلاً).</li>
+        <li><strong><code>media</code></strong>: الملفات التي يرفعها المستخدمون (مثل صور البروفايل، أو <strong>تسجيلات التسميع الصوتية</strong>).</li>
+    </ul>
+    <h2>3. شرح التفاصيل والملفات (File by File)</h2>
+    <p>سنركز على تطبيق <strong><code>apps/accounts</code></strong> لأنه المحرك الوحيد للموقع حالياً.</p>
+    <h3>📄 <code>apps/accounts/models.py</code> (قاعدة البيانات)</h3>
+    <p>هذا الملف يصف "شكل البيانات" في النظام. كل <code>class</code> هنا يتحول لجدول في قاعدة البيانات.<br>
+    أهم الجداول (Models):</p>
+    <ol>
+        <li><strong><code>Profile</code></strong>: يربط كل مستخدم (User) ببيانات إضافية مثل: هل هو <strong>طالب</strong> أم <strong>معلم</strong>؟ ما هي حلقته؟ صورته؟ هو العمود الفقري لتحديد الصلاحيات.</li>
+        <li><strong><code>Halaqa</code> (الحلقة)</strong>: تمثل فصل التحفيظ. لها اسم، وتربط الطلاب بالمعلمين.</li>
+        <li><strong><code>Recitation</code> &amp; <code>Review</code></strong>: هذه هي "الواجبات". المعلم ينشئ Recitation (مثلاً: سورة البقرة من آية 1 لـ 10).</li>
+        <li><strong><code>Submission</code></strong>: عندما يقوم الطالب بتسجيل صوته ورفعه، يتم حفظه هنا.</li>
+        <li><strong><code>Attendance</code></strong>: لتسجيل حضور وغياب الطلاب.</li>
+    </ol>
+    <h3>📄 <code>apps/accounts/views.py</code> (المنطق والتحكم)</h3>
+    <p>هذا الملف هو "الدينامو". يحتوي على الدوال (Functions) التي تنفذ الأوامر.<br>
+    أهم الدوال:</p>
+    <ol>
+        <li><strong><code>login_view</code> &amp; <code>register_view</code></strong>: تدير عملية الدخول وإنشاء الحساب. ملاحظة: تحتوي على منطق إرسال كود تحقق (OTP) للإيميل.</li>
+        <li><strong><code>student_dashboard</code></strong>: تجمع بيانات الطالب: مهامه المعلقة، درجاته، نسبة حضوره.</li>
+        <li><strong><code>teacher_dashboard</code></strong>: تجمع بيانات المعلم: حلقاته، التسليمات الجديدة.</li>
+        <li><strong><code>submit_task</code></strong>: تستقبل ملف الصوت من الطالب وتحفظه في قاعدة البيانات.</li>
+    </ol>
+    <h2>4. كيف تتصل الملفات ببعضها؟ (The Flow)</h2>
+    <p>لنتخيل سيناريو <strong>"طالب يدخل ليسلم واجب"</strong>:</p>
+    <ol>
+        <li><strong>المتصفح (Browser)</strong>: الطالب يطلب رابط الموقع <code>/dashboard/</code>.</li>
+        <li><strong><code>hifztracker/urls.py</code></strong>: يستقبل الطلب، يوجهه إلى <code>apps.accounts.urls</code>.</li>
+        <li><strong><code>apps/accounts/urls.py</code></strong>: يوجهه للدالة <code>student_dashboard</code> في ملف <code>views.py</code>.</li>
+        <li><strong><code>views.py</code></strong>: تطلب البيانات من <strong>Models</strong>، وترسلها لملف <strong>HTML</strong>.</li>
+        <li><strong><code>student_dashboard.html</code></strong>: يعرض الصفحة للطالب.</li>
+    </ol>
+    <h2>ملخص بسيط</h2>
+    <ul>
+        <li><strong>Models</strong>: شكل البيانات (جداول).</li>
+        <li><strong>Views</strong>: العقل المدبر (كود بايثون).</li>
+        <li><strong>Templates</strong>: الشكل الخارجي (HTML).</li>
+        <li><strong>Urls</strong>: العناوين والروابط.</li>
+    </ul>
+    <p>هذا هو باختصار هيكل مشروعك! هو منظم جداً ويعتمد على مبدأ فصل المسؤوليات (كل ملف له وظيفة محددة).</p>
+</body>
+</html>

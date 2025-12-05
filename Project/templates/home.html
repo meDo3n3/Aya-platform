@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head><meta charset="utf-8"><title>الرئيسية</title></head>
+<body>
+  {% if messages %}
+    {% for message in messages %}
+      <div style="margin:6px 0; color:{% if message.tags == 'error' %}red{% else %}green{% endif %}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {% if request.user.is_authenticated %}
+    <p>أهلًا {{ request.user.username }} ✅</p>
+    {% if request.user.profile %}<p>نوع الحساب: {{ request.user.profile.role }}</p>{% endif %}
+    <p><a href="{% url 'accounts:logout' %}">تسجيل الخروج</a></p>
+  {% else %}
+    <p>أنت غير مسجّل الدخول. <a href="{% url 'accounts:login' %}">سجّل الدخول</a></p>
+  {% endif %}
+</body>
+</html>

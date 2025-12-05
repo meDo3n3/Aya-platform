@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3>Student Dashboard</h3>
+<p><strong>Name:</strong> {{ student.user.get_full_name|default:student.user.username }}</p>
+<div class="row">
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Average Mastery</h5>
+        <p class="display-6">{{ mastery_avg }}%</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Attendance Rate</h5>
+        <p class="display-6">{{ attendance_rate }}%</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h5>Recent Memorization</h5>
+<table class="table table-striped">
+  <thead><tr><th>Date</th><th>From</th><th>To</th><th>Mastery</th></tr></thead>
+  <tbody>
+    {% for m in memos %}
+    <tr>
+      <td>{{ m.date }}</td>
+      <td>{{ m.from_surah }}:{{ m.from_ayah }}</td>
+      <td>{{ m.to_surah }}:{{ m.to_ayah }}</td>
+      <td>{{ m.mastery }}%</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="4">No records yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

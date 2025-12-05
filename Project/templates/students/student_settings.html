@@ -1,0 +1,388 @@
+{% load static %}
+<!DOCTYPE html>
+<html dir="rtl" lang="ar" class="">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>إعدادات الحساب - منصة آية</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#386641", "secondary": "#6A994E", "success": "#A7C957", "background": "#F7F9FC",
+                        "card": "#FFFFFF", "text-primary": "#212529", "text-secondary": "#6C757D",
+                        "border-color": "#E5E7EB", "danger": "#e63946",
+                        "background-dark": "#111827", "card-dark": "#1F2937", "text-primary-dark": "#F9FAFB",
+                        "text-secondary-dark": "#9CA3AF", "border-color-dark": "#374151",
+                    },
+                    fontFamily: { display: ["Cairo", "  sans-serif"] },
+                },
+            },
+        };
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background dark:bg-background-dark font-display text-text-primary dark:text-text-primary-dark antialiased">
+    <div class="min-h-screen">
+        <header
+            class="sticky top-0 z-40 bg-card/80 dark:bg-card-dark/80 backdrop-blur-sm border-b border-border-color dark:border-border-color-dark">
+            <div class="mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center gap-4">
+                    <a href="{% url 'accounts:student_dashboard' %}"
+                        class="flex items-center gap-3 text-text-primary dark:text-text-primary-dark hover:opacity-80 transition">
+                        <span class="material-symbols-outlined">arrow_forward</span>
+                        <h1 class="text-xl font-bold">إعدادات الحساب</h1>
+                    </a>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="theme-toggle"
+                        class="rounded-full p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        title="تغيير المظهر">
+                        <span class="material-symbols-outlined text-text-secondary dark:text-text-secondary-dark"
+                            id="theme-icon"></span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="py-8">
+            <form id="settings-form" method="POST" action="{% url 'accounts:student_settings' %}"
+                enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 space-y-8">
+
+                            <section
+                                class="bg-card dark:bg-card-dark p-6 rounded-xl shadow-subtle border border-border-color dark:border-border-color-dark">
+                                <h3 class="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-6">
+                                    المعلومات الشخصية</h3>
+                                <div class="space-y-6">
+                                    <div class="flex items-center gap-5">
+                                        <img id="avatar-preview" src="{{ profile.avatar_url }}" alt="الصورة الشخصية"
+                                            class="w-20 h-20 rounded-full object-cover ring-4 ring-primary/10 dark:ring-success/20">
+                                        <div class="flex items-center gap-2">
+                                            <label for="avatar-upload"
+                                                class="cursor-pointer bg-primary/10 text-primary dark:bg-success/20 dark:text-success font-bold py-2 px-4 rounded-lg text-sm hover:bg-primary/20 dark:hover:bg-success/30 transition-colors">
+                                                تغيير الصورة
+                                            </label>
+                                            <input type="file" id="avatar-upload" name="avatar" class="hidden"
+                                                accept="image/*">
+                                            <button type="button" id="remove-avatar-btn"
+                                                class="text-text-secondary dark:text-text-secondary-dark font-bold py-2 px-4 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">إزالة</button>
+                                            <input type="hidden" name="remove_avatar" id="remove-avatar-input"
+                                                value="false">
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label
+                                                class="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-2"
+                                                for="username">اسم المستخدم</label>
+                                            <input
+                                                class="w-full p-3 bg-gray-100 dark:bg-gray-800 border-border-color dark:border-border-color-dark rounded-lg cursor-not-allowed"
+                                                id="username" type="text" value="{{ user.username }}" disabled>
+                                        </div>
+                                        <div>
+                                            <label
+                                                class="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-2"
+                                                for="full_name">الاسم الكامل</label>
+                                            <input
+                                                class="w-full p-3 bg-background dark:bg-background-dark border border-border-color dark:border-border-color-dark rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition"
+                                                id="full_name" name="full_name" type="text"
+                                                value="{{ user.get_full_name }}">
+                                        </div>
+                                        <div class="md:col-span-2">
+                                            <label
+                                                class="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-2"
+                                                for="halaqa">الحلقة</label>
+                                            <div class="relative">
+                                                <select
+                                                    class="w-full p-3 bg-background dark:bg-background-dark border border-border-color dark:border-border-color-dark rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition appearance-none"
+                                                    id="halaqa" name="halaqa">
+                                                    {% for halaqa in halaqas %}
+                                                    <option value="{{ halaqa.id }}" {% if profile.halaqa and profile.halaqa.id == halaqa.id %}selected{% endif %}>{{halaqa.name}}</option>{% endfor %}
+                                                </select>
+                                                <div
+                                                    class="pointer-events-none absolute inset-y-0 left-0 flex items-center px-2 text-text-secondary dark:text-text-secondary-dark">
+                                                    <span class="material-symbols-outlined">expand_more</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section
+                                class="bg-card dark:bg-card-dark p-6 rounded-xl shadow-subtle border border-border-color dark:border-border-color-dark">
+                                <h3 class="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-6">تفضيلات
+                                    الإشعارات</h3>
+                                <div class="space-y-4 divide-y divide-border-color dark:divide-border-color-dark">
+                                    <div class="flex items-center justify-between pt-4 first:pt-0">
+                                        <div>
+                                            <p class="font-semibold text-text-primary dark:text-text-primary-dark">
+                                                إشعارات البريد الإلكتروني</p>
+                                            <p class="text-sm text-text-secondary dark:text-text-secondary-dark">عندما
+                                                يقوم معلمك بتقييم تسليماتك.</p>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" name="email_notifications" class="sr-only peer" {% if profile.email_notifications %}checked{% endif %}>
+                                            <div
+                                                class="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-secondary/50 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary dark:peer-checked:bg-success">
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section
+                                class="bg-card dark:bg-card-dark p-6 rounded-xl shadow-subtle border border-border-color dark:border-border-color-dark">
+                                <h3 class="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-6">تغيير
+                                    كلمة المرور</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-2" for="current_password">كلمة المرور الحالية</label>
+                                        <input class="w-full p-3 bg-background dark:bg-background-dark border border-border-color dark:border-border-color-dark rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition" id="current_password" name="current_password" type="password" placeholder="مطلوب فقط عند تغيير كلمة المرور">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-2" for="new_password">كلمة المرور الجديدة</label>
+                                        <input class="w-full p-3 bg-background dark:bg-background-dark border border-border-color dark:border-border-color-dark rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition" id="new_password" name="new_password" type="password" placeholder="اتركها فارغة لعدم التغيير">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-2" for="confirm_password">تأكيد كلمة المرور الجديدة</label>
+                                        <input class="w-full p-3 bg-background dark:bg-background-dark border border-border-color dark:border-border-color-dark rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition" id="confirm_password" name="confirm_password" type="password" placeholder="تأكيد كلمة المرور الجديدة">
+                                    </div>
+                                </div>
+                            </section>
+
+                        </div>
+
+                        <div class="lg:col-span-1 space-y-8">
+                            <section
+                                class="bg-card dark:bg-card-dark p-6 rounded-xl shadow-subtle border border-border-color dark:border-border-color-dark">
+                                <h3
+                                    class="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-6 flex items-center gap-2">
+                                    <span
+                                        class="material-symbols-outlined text-primary dark:text-success">security</span>
+                                    <span>الأمان وجلسات الدخول</span>
+                                </h3>
+                                <div class="space-y-4 text-sm">
+                                    <div
+                                        class="flex justify-between items-center text-text-secondary dark:text-text-secondary-dark">
+                                        <span>آخر تسجيل دخول:</span>
+                                        <span class="font-semibold text-text-primary dark:text-text-primary-dark">{% if user.last_login %}{{ user.last_login|date:"j F Y, g:i A" }}{% else %}لم يسجل بعد{% endif %}</span>
+                                    </div>
+                                    <button type="button" id="logout-others-btn"
+                                        class="w-full text-center bg-gray-100 dark:bg-gray-700 text-text-primary dark:text-text-primary-dark font-bold py-2.5 px-4 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                                        تسجيل الخروج من الأجهزة الأخرى
+                                    </button>
+                                </div>
+                            </section>
+
+                            <section
+                                class="p-6 rounded-xl shadow-subtle border-2 border-red-500/30 dark:border-red-500/50 bg-red-500/5">
+                                <h3 class="text-xl font-bold text-red-800 dark:text-red-400">منطقة الخطر</h3>
+                                <p class="text-sm text-red-700 dark:text-red-300 mt-2 mb-4">هذا الإجراء لا يمكن التراجع
+                                    عنه. سيتم تعطيل حسابك.</p>
+                                <button type="button" id="delete-account-btn"
+                                    class="bg-red-500/10 text-red-700 dark:bg-red-500/20 dark:text-red-300 font-bold py-2 px-4 rounded-lg text-sm hover:bg-red-500/20 dark:hover:bg-red-500/30 transition-colors">
+                                    حذف الحساب
+                                </button>
+                            </section>
+                        </div>
+                    </div>
+
+                    <div
+                        class="sticky bottom-0 bg-card/80 dark:bg-card-dark/80 backdrop-blur-sm py-4 border-t border-border-color dark:border-border-color-dark flex justify-end gap-3 mt-8 -mx-4 -mb-8 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+                        <button type="reset"
+                            class="bg-gray-200 dark:bg-gray-700 text-text-secondary dark:text-text-primary-dark px-6 py-2.5 rounded-lg font-bold hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                            إلغاء
+                        </button>
+                        <button type="submit" id="save-changes-btn"
+                            class="bg-primary text-white flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold hover:bg-secondary transition-colors">
+                            <span>حفظ التغييرات</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const getCsrfToken = () => document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            // --- Dark Mode Logic ---
+            const themeToggle = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const applyTheme = (theme) => {
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                    if (themeIcon) themeIcon.textContent = 'light_mode';
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    if (themeIcon) themeIcon.textContent = 'dark_mode';
+                }
+            };
+            const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            applyTheme(savedTheme);
+            themeToggle?.addEventListener('click', () => {
+                const newTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+                localStorage.setItem('theme', newTheme);
+                applyTheme(newTheme);
+            });
+
+            // --- Avatar Preview & Remove Logic ---
+            const avatarUpload = document.getElementById('avatar-upload');
+            const avatarPreview = document.getElementById('avatar-preview');
+            const removeAvatarBtn = document.getElementById('remove-avatar-btn');
+            const removeAvatarInput = document.getElementById('remove-avatar-input');
+
+            if (avatarUpload && avatarPreview) {
+                avatarUpload.addEventListener('change', function (event) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => avatarPreview.src = e.target.result;
+                        reader.readAsDataURL(file);
+                        removeAvatarInput.value = 'false';
+                    }
+                });
+            }
+            if (removeAvatarBtn) {
+                removeAvatarBtn.addEventListener('click', () => {
+                    avatarUpload.value = '';
+                    avatarPreview.src = "{{ default_avatar_url }}";
+                    removeAvatarInput.value = 'true';
+                    Swal.fire({
+                        toast: true, position: 'top-start', icon: 'info',
+                        title: 'سيتم إزالة الصورة عند الحفظ.', showConfirmButton: false, timer: 3000
+                    });
+                });
+            }
+
+            // --- Style Django Form Fields ---
+            document.querySelectorAll('input[type="password"]').forEach(field => {
+                field.classList.add('w-full', 'p-3', 'bg-background', 'dark:bg-background-dark', 'border', 'border-border-color', 'dark:border-border-color-dark', 'rounded-lg', 'focus:ring-2', 'focus:ring-primary/50', 'focus:border-primary', 'transition');
+            });
+
+            // --- AJAX Form Submission ---
+            const settingsForm = document.getElementById('settings-form');
+            const saveChangesBtn = document.getElementById('save-changes-btn');
+            if (settingsForm) {
+                settingsForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(settingsForm);
+                    const originalButtonText = saveChangesBtn.innerHTML;
+                    saveChangesBtn.innerHTML = '<span>جاري الحفظ...</span>';
+                    saveChangesBtn.disabled = true;
+
+                    try {
+                        const response = await fetch(settingsForm.action, {
+                            method: 'POST',
+                            body: formData,
+                            headers: { 'X-CSRFToken': getCsrfToken() }
+                        });
+                        const result = await response.json();
+
+                        if (response.ok) {
+                            Swal.fire({ toast: true, position: 'top-start', icon: 'success', title: result.message, showConfirmButton: false, timer: 3000 });
+                            if (result.new_avatar_url) {
+                                // Update header avatar if it exists
+                                const headerAvatar = document.querySelector('header img[alt="صورة الحساب"]');
+                                if (headerAvatar) headerAvatar.src = result.new_avatar_url;
+                            }
+                        } else {
+                            Swal.fire('خطأ', result.message || 'فشل حفظ التغييرات.', 'error');
+                        }
+                    } catch (error) {
+                        Swal.fire('خطأ', 'حدث خطأ في الشبكة. يرجى المحاولة مرة أخرى.', 'error');
+                    } finally {
+                        saveChangesBtn.innerHTML = originalButtonText;
+                        saveChangesBtn.disabled = false;
+                    }
+                });
+            }
+
+            // --- Security Actions ---
+            document.getElementById('logout-others-btn')?.addEventListener('click', () => {
+                Swal.fire({
+                    title: 'هل أنت متأكد؟',
+                    text: "سيتم تسجيل خروجك من جميع الأجهزة الأخرى.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#386641',
+                    cancelButtonColor: '#6C757D',
+                    confirmButtonText: 'نعم، قم بذلك',
+                    cancelButtonText: 'إلغاء'
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        try {
+                            const response = await fetch("{% url 'accounts:logout_other_devices' %}", {
+                                method: 'POST',
+                                headers: { 'X-CSRFToken': getCsrfToken() }
+                            });
+                            const data = await response.json();
+                            if (response.ok) { Swal.fire('نجاح', data.message, 'success'); }
+                            else { throw new Error(data.message); }
+                        } catch (error) { Swal.fire('خطأ', error.message || 'فشل تنفيذ الإجراء', 'error'); }
+                    }
+                })
+            });
+
+            document.getElementById('delete-account-btn')?.addEventListener('click', () => {
+                Swal.fire({
+                    title: 'هل أنت متأكد تمامًا؟',
+                    html: `سيتم حذف حسابك. هذا الإجراء لا يمكن التراجع عنه. <br/> الرجاء كتابة "<b>حذف</b>" للتأكيد.`,
+                    icon: 'error',
+                    input: 'text',
+                    inputPlaceholder: 'اكتب "حذف" هنا',
+                    showCancelButton: true,
+                    confirmButtonText: 'تأكيد الحذف',
+                    cancelButtonText: 'إلغاء',
+                    confirmButtonColor: '#d33',
+                    preConfirm: (value) => {
+                        if (value !== 'حذف') {
+                            Swal.showValidationMessage('يجب كتابة "حذف" بشكل صحيح للمتابعة.')
+                        }
+                    }
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        try {
+                            const response = await fetch("{% url 'accounts:delete_account' %}", {
+                                method: 'POST',
+                                headers: { 'X-CSRFToken': getCsrfToken() }
+                            });
+                            const data = await response.json();
+                            if (response.ok) {
+                                await Swal.fire('تم الحذف', data.message, 'success');
+                                window.location.href = "{% url 'accounts:login' %}";
+                            } else { throw new Error(data.message); }
+                        } catch (error) { Swal.fire('خطأ', error.message || 'فشل حذف الحساب', 'error'); }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

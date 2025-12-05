@@ -1,0 +1,322 @@
+{% load static %}
+<!DOCTYPE html>
+<html dir="rtl" lang="ar" class="">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>تسجيل الدخول - منصة آية</title>
+    <link rel="icon" type="image/png" href="{% static 'img/logo.png' %}">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { DEFAULT: "#386641", light: "#6A994E", dark: "#A7C957" },
+                        secondary: "#6A994E",
+                        background: { DEFAULT: "#F7F9FC", dark: "#111827" },
+                        card: { DEFAULT: "#FFFFFF", dark: "#1F2937" },
+                        "text-primary": { DEFAULT: "#212529", dark: "#F9FAFB" },
+                        "text-secondary": { DEFAULT: "#6C757D", dark: "#9CA3AF" },
+                        border: { DEFAULT: "#E5E7EB", dark: "#374151" },
+                        error: "#e63946",
+                        success: "#A7C957",
+                    },
+                    fontFamily: { display: ["Cairo", "sans-serif"] },
+                    borderRadius: { xl: "1rem", lg: "0.75rem" },
+                    boxShadow: {
+                        subtle: "0 4px 12px 0 rgba(0,0,0,.05)",
+                        lifted: "0 10px 30px 0 rgba(0,0,0,.07)",
+                    },
+                    animation: {
+                        'fade-in': 'fade-in 0.5s ease-out forwards',
+                        'fade-out': 'fade-out 0.5s ease-in forwards'
+                    },
+                    keyframes: {
+                        'fade-in': { from: { opacity: 0 }, to: { opacity: 1 } },
+                        'fade-out': { from: { opacity: 1 }, to: { opacity: 0 } }
+                    }
+                },
+            },
+        };
+    </script>
+
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .form-input-group {
+            position: relative;
+        }
+
+        .form-input-group label {
+            position: absolute;
+            top: 50%;
+            right: 1rem;
+            transform: translateY(-50%);
+            background: #FFFFFF;
+            padding: 0 .25rem;
+            color: #6C757D;
+            font-size: 1rem;
+            transition: all .2s ease-in-out;
+            pointer-events: none;
+        }
+
+        .dark .form-input-group label {
+            background: #1F2937;
+            color: #9CA3AF;
+        }
+
+        .form-input:focus~label,
+        .form-input:not(:placeholder-shown)~label {
+            top: 0;
+            font-size: .875rem;
+            color: #386641;
+        }
+
+        .dark .form-input:focus~label {
+            color: #A7C957;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background dark:bg-background-dark font-display text-text-primary dark:text-text-primary-dark antialiased">
+
+    <button id="theme-toggle"
+        class="absolute top-6 left-6 z-50 rounded-full p-2.5 bg-card dark:bg-card-dark shadow-subtle hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        title="تغيير المظهر">
+        <span class="material-symbols-outlined text-text-secondary dark:text-text-secondary-dark"
+            id="theme-icon"></span>
+    </button>
+
+    <div class="flex min-h-screen">
+        <div class="w-full lg:w-1/2 flex flex-col justify-center items-center p-6 sm:p-12">
+            <div class="w-full max-w-md my-auto">
+                <div class="text-center mb-8">
+                    <a href="#" class="inline-block mb-4">
+                        <div
+                            class="bg-card dark:bg-card-dark p-2 rounded-2xl flex items-center justify-center shadow-subtle">
+                            <img src="{% static 'img/logo.png' %}" alt="شعار منصة آية" class="w-14 h-14">
+                        </div>
+                    </a>
+                    <h1 class="text-3xl font-extrabold">تسجيل الدخول</h1>
+                    <p class="text-text-secondary dark:text-text-secondary-dark mt-2">مرحباً بعودتك! سجل دخولك للمتابعة.
+                    </p>
+                </div>
+
+                <form id="login-form" method="POST" action="{% url 'accounts:login' %}" class="space-y-6">
+                    {% csrf_token %}
+
+                    <div id="role-selector"
+                        class="flex border border-border dark:border-border-dark rounded-lg p-1 bg-background dark:bg-background-dark/50">
+                        <button type="button" data-role="student"
+                            class="w-1/2 py-2.5 px-4 rounded-md text-center font-bold flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined">person</span>
+                            <span>طالب</span>
+                        </button>
+                        <button type="button" data-role="teacher"
+                            class="w-1/2 py-2.5 px-4 rounded-md text-center font-bold flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined">school</span>
+                            <span>معلم</span>
+                        </button>
+                    </div>
+                    <input type="hidden" name="role" id="role-input" value="student" />
+
+                    <div class="form-input-group">
+                        <input id="username" name="username" type="text" placeholder=" " required
+                            class="form-input w-full p-4 rounded-lg bg-card dark:bg-card-dark border-2 border-border dark:border-border-dark focus:outline-none focus:ring-0 focus:border-primary placeholder-transparent text-lg" />
+                        <label for="username">اسم المستخدم أو البريد الإلكتروني</label>
+                    </div>
+
+                    <div class="form-input-group">
+                        <input id="password" name="password" type="password" placeholder=" " required
+                            class="form-input w-full p-4 rounded-lg bg-card dark:bg-card-dark border-2 border-border dark:border-border-dark focus:outline-none focus:ring-0 focus:border-primary placeholder-transparent text-lg" />
+                        <label for="password">كلمة المرور</label>
+                        <button type="button" id="toggle-password"
+                            class="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary dark:text-text-secondary-dark">
+                            <span id="toggle-icon" class="material-symbols-outlined">visibility_off</span>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <input id="remember-me" name="remember-me" type="checkbox"
+                                class="h-4 w-4 text-primary focus:ring-primary/50 border-gray-300 rounded" />
+                            <label for="remember-me"
+                                class="mr-2 block text-sm text-text-secondary dark:text-text-secondary-dark">تذكرني</label>
+                        </div>
+                        <div class="text-sm">
+                            <a href="{% url 'accounts:forgot_password' %}"
+                                class="font-bold text-primary hover:underline">هل نسيت كلمة المرور؟</a>
+                        </div>
+                    </div>
+
+                    {% if messages %}
+                    <div class="space-y-3 text-center my-4">
+                        {% for message in messages %}
+                        <div class="p-2">
+                            <p class="text-lg font-bold {% if message.tags == 'error' or message.tags == 'warning' %}text-red-600{% elif message.tags == 'success' %}text-green-600{% else %}text-blue-600{% endif %}">
+                                {{ message }}
+                            </p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <button type="submit"
+                        class="w-full bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-primary-light transition-colors text-lg">
+                        تسجيل الدخول
+                    </button>
+                </form>
+
+                <div class="mt-8 text-center">
+                    <p class="text-sm text-text-secondary dark:text-text-secondary-dark">
+                        ليس لديك حساب؟ <a href="{% url 'accounts:register' %}"
+                            class="font-bold text-primary hover:underline">إنشاء حساب جديد</a>
+                    </p>
+                </div>
+                <div class="mt-4 text-center">
+                    <a href="/admin/"
+                        class="text-sm text-text-secondary dark:text-text-secondary-dark hover:text-primary underline">
+                        تسجيل دخول المشرف
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div
+            class="hidden lg:flex w-1/2 bg-gradient-to-tr from-primary/5 to-secondary/10 dark:from-primary/10 dark:to-secondary/20 items-center justify-center p-12 relative overflow-hidden">
+            <div class="absolute inset-0 opacity-20"
+                style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23386641\' fill-opacity=\'0.2\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');">
+            </div>
+            <div class="text-center z-10 space-y-4">
+                <h2 id="dynamic-title"
+                    class="text-4xl font-black text-primary dark:text-success leading-tight transition-opacity duration-500 opacity-0">
+                </h2>
+                <div id="typewriter-container" class="typewriter-container h-16">
+                    <p id="typewriter-text"
+                        class="text-2xl text-text-secondary dark:text-text-secondary-dark max-w-md mx-auto transition-opacity duration-500 opacity-0">
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // --- Role Selector Logic ---
+            const roleSelector = document.getElementById('role-selector');
+            const roleButtons = roleSelector.querySelectorAll('button');
+            const roleInput = document.getElementById('role-input');
+
+            const setRole = (role) => {
+                roleInput.value = role;
+                roleButtons.forEach(btn => {
+                    const isActive = btn.dataset.role === role;
+                    btn.classList.toggle('bg-card', isActive);
+                    btn.classList.toggle('dark:bg-card-dark', isActive);
+                    btn.classList.toggle('text-primary', isActive);
+                    btn.classList.toggle('dark:text-primary-dark', isActive);
+                    btn.classList.toggle('shadow-sm', isActive);
+                    // Remove general text color to let specific active/inactive colors work
+                    btn.classList.remove('text-text-secondary', 'dark:text-text-secondary-dark');
+                });
+            };
+
+            // احصل على الدور الذي تم اختياره قبل تحديث الصفحة (في حالة فشل تسجيل الدخول)
+            const lastSelectedRole = "{{ selected_role|default:'student' }}";
+            setRole(lastSelectedRole); // عيّن الدور بناءً على المحاولة الأخيرة أو الافتراضي "طالب"
+            roleButtons.forEach(btn => btn.addEventListener('click', () => setRole(btn.dataset.role)));
+
+            // --- Password Toggle Logic ---
+            const togglePassword = document.getElementById('toggle-password');
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('toggle-icon');
+
+            if (togglePassword) {
+                togglePassword.addEventListener('click', function () {
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    toggleIcon.textContent = type === 'password' ? 'visibility_off' : 'visibility';
+                });
+            }
+
+            // --- Theme Toggle Logic ---
+            const themeToggle = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+
+            const applyTheme = (theme) => {
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                    if (themeIcon) themeIcon.textContent = 'light_mode';
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    if (themeIcon) themeIcon.textContent = 'dark_mode';
+                }
+            };
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            applyTheme(savedTheme);
+            themeToggle?.addEventListener('click', () => {
+                const newTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+                localStorage.setItem('theme', newTheme);
+                applyTheme(newTheme);
+            });
+
+            // --- Dynamic Typewriter Logic ---
+            const dynamicTitle = document.getElementById('dynamic-title');
+            const typewriterText = document.getElementById('typewriter-text');
+            let typewriterTimeout;
+            const inspirationalContent = [
+                { title: "من وحي القرآن والسنة", quote: "خَيْرُكُمْ مَنْ تَعَلَّمَ القُرْآنَ وَعَلَّمَهُ" },
+                { title: "اقرأ وارتقِ", quote: "فإن منزلتك عند آخر آية تقرؤها." },
+                { title: "القرآن رفيقك", quote: "معنا يصبح الحفظ والمراجعة أسهل." }
+            ];
+            let contentIndex = 0;
+
+            function runTypewriter() {
+                if (!dynamicTitle || !typewriterText) return;
+                clearTimeout(typewriterTimeout);
+                const content = inspirationalContent[contentIndex];
+
+                dynamicTitle.classList.add('opacity-0');
+                typewriterText.classList.add('opacity-0');
+
+                setTimeout(() => {
+                    dynamicTitle.textContent = content.title;
+                    typewriterText.textContent = '';
+                    dynamicTitle.classList.remove('opacity-0');
+                    typewriterText.classList.remove('opacity-0');
+
+                    let i = 0;
+                    const typingInterval = setInterval(() => {
+                        if (i < content.quote.length) {
+                            typewriterText.textContent += content.quote.charAt(i);
+                            i++;
+                        } else {
+                            clearInterval(typingInterval);
+                            typewriterTimeout = setTimeout(() => {
+                                contentIndex = (contentIndex + 1) % inspirationalContent.length;
+                                runTypewriter();
+                            }, 15000);
+                        }
+                    }, 60);
+                }, 500);
+            }
+
+            runTypewriter();
+        });
+    </script>
+</body>
+
+</html>

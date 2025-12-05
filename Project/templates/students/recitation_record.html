@@ -1,0 +1,114 @@
+{% load static %}
+<!doctype html>
+<html dir="rtl" lang="ar">
+<head>
+  <meta charset="utf-8">
+  <title>تسجيل التسميع</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+  <div class="max-w-xl mx-auto mt-12 p-6 bg-white rounded-xl shadow">
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-xl font-bold">تسجيل التسميع</h1>
+      <p class="text-sm text-gray-500">{{ recitation.surah }} {{ recitation.range_text }}</p>
+    </div>
+
+    <!-- أزرار التحكم -->
+    <div class="flex items-center gap-3 mb-4">
+      <button id="btn-start" class="px-4 py-2 rounded bg-green-600 text-white">ابدأ التسجيل</button>
+      <button id="btn-stop"  class="px-4 py-2 rounded bg-red-600 text-white" disabled>أوقف التسجيل</button>
+    </div>
+
+    <!-- مشغل الصوت بعد التوقف -->
+    <audio id="playback" controls class="w-full hidden mb-4"></audio>
+
+    <!-- أزرار الإرسال والرجوع -->
+    <div class="flex items-center gap-3">
+      <button id="btn-submit" class="px-4 py-2 rounded bg-[#386641] text-white disabled:opacity-50" disabled>تسليم</button>
+      <a href="{% url 'accounts:student_dashboard' %}" class="px-4 py-2 rounded bg-gray-200">رجوع للوحة</a>
+    </div>
+
+    <!-- رسائل -->
+    <p id="msg" class="text-sm mt-4"></p>
+  </div>
+
+  <script>
+    // عناصر الصفحة
+    const btnStart  = document.getElementById('btn-start');
+    const btnStop   = document.getElementById('btn-stop');
+    const btnSubmit = document.getElementById('btn-submit');
+    const audioEl   = document.getElementById('playback');
+    const msg       = document.getElementById('msg');
+
+    let mediaRecorder;
+    let chunks = [];
+
+    function csrfToken() {
+      const name = 'csrftoken';
+      return document.cookie.split(';').map(c=>c.trim()).find(c => c.startsWith(name+'='))?.split('=')[1] || '';
+    }
+
+    // ابدأ التسجيل
+    btnStart.onclick = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        chunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(chunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+          audioEl.src = URL.createObjectURL(blob);
+          audioEl.classList.remove('hidden');
+          btnSubmit.disabled = false;              // ← فعل زر التسليم بعد توقف التسجيل
+          msg.textContent = "تم إنهاء التسجيل. يمكنك الاستماع ثم التسليم.";
+        };
+        mediaRecorder.start();
+        btnStart.disabled = true;
+        btnStop.disabled  = false;
+        msg.textContent = "جاري التسجيل...";
+      } catch (err) {
+        msg.textContent = "لا يمكن الوصول للميكروفون: " + err.message;
+      }
+    };
+
+    // أوقف التسجيل
+    btnStop.onclick = () => {
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+        btnStop.disabled  = true;
+        btnStart.disabled = false;
+      }
+    };
+
+    // سلّم التسجيل (ارفعه للسيرفر)
+    btnSubmit.onclick = async () => {
+      if (!chunks.length) return;
+      const blob = new Blob(chunks, { type: mediaRecorder?.mimeType || 'audio/webm' });
+      const fd = new FormData();
+      fd.append('audio', blob, 'recitation.webm');
+
+      btnSubmit.disabled = true;
+      msg.textContent = "جارٍ رفع الملف...";
+
+      try {
+        const resp = await fetch("{% url 'accounts:recitation_submit' recitation.id %}", {
+          method: 'POST',
+          headers: { 'X-CSRFToken': csrfToken() },
+          body: fd
+        });
+        const data = await resp.json();
+        if (data.ok) {
+          msg.textContent = "تم رفع التسميع بنجاح. سيتم الرجوع للوحة...";
+          setTimeout(() => { window.location.href = "{% url 'accounts:student_dashboard' %}"; }, 800);
+        } else {
+          msg.textContent = data.msg || "حدث خطأ أثناء الرفع.";
+          btnSubmit.disabled = false;
+        }
+      } catch (e) {
+        msg.textContent = "تعذّر الرفع: " + e.message;
+        btnSubmit.disabled = false;
+      }
+    };
+  </script>
+</body>
+</html>

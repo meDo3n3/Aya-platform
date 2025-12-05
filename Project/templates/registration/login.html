@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+{% load static %}
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>تسجيل الدخول - منصة التحفيظ</title>
+
+  <link href="https://fonts.googleapis.com" rel="preconnect"/>
+  <link crossorigin href="https://fonts.gstatic.com" rel="preconnect"/>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#2E7D32",
+            "primary-light": "#A5D6A7",
+            "primary-dark": "#1B5E20",
+            secondary: "#BFA36F",
+            "background-light": "#F5F5F5",
+            "background-dark": "#121212",
+            "surface-light": "#FFFFFF",
+            "surface-dark": "#1E1E1E",
+            "text-light": "#212121",
+            "text-dark": "#E0E0E0",
+            "text-muted-light": "#757575",
+            "text-muted-dark": "#BDBDBD",
+            error: "#D32F2F"
+          },
+          fontFamily: { display: ["Cairo", "sans-serif"] },
+          borderRadius: { DEFAULT: "12px" },
+          boxShadow: { soft: "0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05)" }
+        },
+      },
+    };
+  </script>
+
+  <style> body { font-family: 'Cairo', sans-serif; } </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark font-display">
+  <div class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+      <div class="flex justify-center mb-6">
+        <img src="{% static 'images/logo.png' %}" alt="شعار منصة التحفيظ" class="h-24 w-24"/>
+      </div>
+
+      <div class="text-center mb-4">
+        <h1 class="text-3xl font-bold text-primary">منصة آية</h1>
+        <h1 class="text-3xl font-bold text-primary">لتحفيظ القرآن</h1>
+        <p class="text-lg text-text-muted-light dark:text-text-muted-dark mt-2">تسجيل الدخول</p>
+      </div>
+
+      <form method="POST" action="{% url 'accounts:login' %}" class="bg-surface-light dark:bg-surface-dark p-8 rounded-lg shadow-soft">
+        {% csrf_token %}
+
+        <!-- اختيار الدور -->
+        <div class="mb-6">
+          <div id="role-selector" class="flex border border-gray-300 dark:border-gray-600 rounded-lg p-1">
+            <button type="button" class="w-1/2 p-2 rounded-md bg-primary text-white" data-role="student">طالب</button>
+            <button type="button" class="w-1/2 p-2 rounded-md text-text-muted-light dark:text-text-muted-dark" data-role="teacher">معلم</button>
+          </div>
+        </div>
+        <!-- القيمة المرسلة للباك -->
+        <input type="hidden" name="role" id="role" value="student" />
+
+        <!-- اسم المستخدم/البريد -->
+        <div class="mb-4">
+          <label class="sr-only" for="username">اسم المستخدم أو البريد</label>
+          <input id="username" name="username" type="text" placeholder="اسم المستخدم أو البريد"
+                 autocomplete="username"
+                 class="w-full px-4 py-3 rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent placeholder-text-muted-light dark:placeholder-text-muted-dark"
+                 required />
+        </div>
+
+        <!-- كلمة المرور -->
+        <div class="mb-4 relative">
+          <label class="sr-only" for="password">كلمة المرور</label>
+          <input id="password" name="password" type="password" placeholder="كلمة المرور"
+                 autocomplete="current-password"
+                 class="w-full px-4 py-3 rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent placeholder-text-muted-light dark:placeholder-text-muted-dark"
+                 required />
+          <button type="button" id="toggle-password"
+                  class="absolute inset-y-0 left-3 flex items-center text-text-muted-light dark:text-text-muted-dark hover:text-primary"
+                  aria-label="إظهار/إخفاء كلمة المرور">
+            <i id="toggle-icon" class="material-icons text-2xl">visibility_off</i>
+          </button>
+        </div>
+
+        <!-- تذكّرني + نسيت كلمة المرور -->
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center">
+            <input id="remember-me" name="remember-me" type="checkbox"
+                   class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"/>
+            <label for="remember-me" class="mr-2 block text-sm text-text-muted-light dark:text-text-muted-dark">تذكرني</label>
+          </div>
+          <div class="text-sm">
+            <a href="#" class="font-medium text-primary hover:text-primary-dark dark:hover:text-primary-light">هل نسيت كلمة المرور؟</a>
+          </div>
+        </div>
+
+        <!-- رسائل Django -->
+        {% if messages %}
+          <div class="mb-4 space-y-2">
+            {% for message in messages %}
+              <div class="text-sm {% if message.tags == 'error' %}text-error{% else %}text-primary{% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <!-- زر الإرسال -->
+        <div>
+          <button type="submit"
+                  class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+            تسجيل الدخول
+          </button>
+        </div>
+      </form>
+
+      <!-- روابط إضافية -->
+      <div class="mt-6 text-center">
+        <p class="text-sm text-text-muted-light dark:text-text-muted-dark">
+          ليس لديك حساب؟
+          <a href="{% url 'accounts:register' %}" class="font-medium text-primary hover:text-primary-dark dark:hover:text-primary-light">إنشاء حساب</a>
+        </p>
+      </div>
+
+      <div class="mt-6 text-center">
+        <a href="/admin/" class="text-sm text-text-muted-light dark:text-text-muted-dark hover:text-primary dark:hover:text-primary-light underline">
+          تسجيل دخول المشرف
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const roleButtons = document.querySelectorAll('#role-selector [data-role]');
+      const roleInput = document.getElementById('role');
+
+      function setActive(role) {
+        roleButtons.forEach(b => {
+          const on = b.dataset.role === role;
+          b.classList.toggle('bg-primary', on);
+          b.classList.toggle('text-white', on);
+          b.classList.toggle('text-text-muted-light', !on);
+          b.classList.toggle('dark:text-text-muted-dark', !on);
+        });
+        roleInput.value = role;
+      }
+
+      roleButtons.forEach(btn => btn.addEventListener('click', () => setActive(btn.dataset.role)));
+
+      // تفعيل الاختيار القادم من السيرفر إن وُجد
+      const serverSelectedRole = "{{ selected_role|default:'' }}";
+      setActive(serverSelectedRole === 'teacher' ? 'teacher' : 'student');
+
+      // إظهار/إخفاء كلمة المرور + تبديل الأيقونة
+      const toggle = document.getElementById('toggle-password');
+      const pass = document.getElementById('password');
+      const icon = document.getElementById('toggle-icon');
+      if (toggle && pass) {
+        toggle.addEventListener('click', () => {
+          const isHidden = pass.type === 'password';
+          pass.type = isHidden ? 'text' : 'password';
+          icon.textContent = isHidden ? 'visibility' : 'visibility_off';
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

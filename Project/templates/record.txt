@@ -1,0 +1,106 @@
+{% load static %}
+<!doctype html>
+<html dir="rtl" lang="ar">
+<head>
+  <meta charset="utf-8">
+  <title>تسجيل التسميع</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+  <div class="max-w-xl mx-auto mt-10 p-6 bg-white rounded-xl shadow">
+    <h1 class="text-xl font-bold mb-1">تسجيل التسميع</h1>
+    <p class="text-sm text-gray-600 mb-4">{{ recitation.surah }} {{ recitation.range_text }}</p>
+
+    <div class="space-y-4">
+      <div class="flex items-center gap-3">
+        <button id="btn-start" class="px-4 py-2 rounded bg-green-600 text-white">ابدأ التسجيل</button>
+        <button id="btn-stop"  class="px-4 py-2 rounded bg-red-600 text-white" disabled>أوقف التسجيل</button>
+      </div>
+
+      <audio id="playback" controls class="w-full hidden"></audio>
+
+      <div class="flex items-center gap-3">
+        <button id="btn-submit" class="px-4 py-2 rounded bg-primary text-white disabled:opacity-50" disabled>تسليم</button>
+        <a href="{% url 'accounts:student_dashboard' %}" class="px-4 py-2 rounded bg-gray-200">رجوع للوحة</a>
+      </div>
+
+      <p id="msg" class="text-sm"></p>
+    </div>
+  </div>
+
+  <script>
+    const btnStart = document.getElementById('btn-start');
+    const btnStop  = document.getElementById('btn-stop');
+    const btnSubmit= document.getElementById('btn-submit');
+    const audioEl  = document.getElementById('playback');
+    const msg      = document.getElementById('msg');
+
+    let mediaRecorder;
+    let chunks = [];
+
+    function getCSRFToken() {
+      // من كعكة csrftoken
+      const name = 'csrftoken';
+      const cookies = document.cookie.split(';').map(c=>c.trim());
+      for (const c of cookies) {
+        if (c.startsWith(name + '=')) return decodeURIComponent(c.split('=')[1]);
+      }
+      return '';
+    }
+
+    btnStart.onclick = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        chunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(chunks, { type: 'audio/webm' });
+          audioEl.src = URL.createObjectURL(blob);
+          audioEl.classList.remove('hidden');
+          btnSubmit.disabled = false;
+        };
+        mediaRecorder.start();
+        btnStart.disabled = true;
+        btnStop.disabled  = false;
+        msg.textContent = "جاري التسجيل...";
+      } catch (err) {
+        msg.textContent = "لا أستطيع الوصول للميكروفون: " + err.message;
+      }
+    };
+
+    btnStop.onclick = () => {
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+        btnStop.disabled  = true;
+        btnStart.disabled = false;
+        msg.textContent = "تم إنهاء التسجيل. يمكنك الاستماع ثم التسليم.";
+      }
+    };
+
+    btnSubmit.onclick = async () => {
+      if (!chunks.length) return;
+      const blob = new Blob(chunks, { type: 'audio/webm' });
+      const fd = new FormData();
+      fd.append('audio', blob, 'recitation.webm');
+
+      try {
+        const resp = await fetch("{% url 'accounts:recitation_submit' recitation.id %}", {
+          method: 'POST',
+          headers: { 'X-CSRFToken': getCSRFToken() },
+          body: fd
+        });
+        const data = await resp.json();
+        if (data.ok) {
+          msg.textContent = "تم رفع التسميع بنجاح. سنرجعك للوحة الآن...";
+          setTimeout(() => { window.location.href = "{% url 'accounts:student_dashboard' %}"; }, 800);
+        } else {
+          msg.textContent = data.msg || "حدث خطأ أثناء الرفع.";
+        }
+      } catch (e) {
+        msg.textContent = "تعذّر الرفع: " + e.message;
+      }
+    };
+  </script>
+</body>
+</html>

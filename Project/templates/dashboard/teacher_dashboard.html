@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3>Teacher Dashboard</h3>
+<div class="row">
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Your Classes (Halaqat)</h5>
+        <ul class="list-group">
+          {% for h in halaqat %}
+          <li class="list-group-item d-flex justify-content-between">
+            <span>{{ h.name }} ({{ h.students.count }} students)</span>
+          </li>
+          {% empty %}
+          <li class="list-group-item">No Halaqat assigned.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Quick Actions</h5>
+        <a class="btn btn-primary btn-sm me-2" href="/tracker/record/memorization/">Record Memorization</a>
+        <a class="btn btn-secondary btn-sm me-2" href="/tracker/record/review/">Record Review</a>
+        <a class="btn btn-outline-dark btn-sm" href="/tracker/record/attendance/">Record Attendance</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h5>Recent Submissions</h5>
+<ul class="list-group">
+  {% for r in recent %}
+  <li class="list-group-item">
+    {{ r.student }} – {{ r.date }} – {{ r.from_surah }}:{{ r.from_ayah }} → {{ r.to_surah }}:{{ r.to_ayah }} ({{ r.mastery }}%)
+  </li>
+  {% empty %}
+  <li class="list-group-item">No records yet.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

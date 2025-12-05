@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دليل تشغيل HifzTracker على macOS</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+            background: #fff;
+        }
+        h1 { color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        h2 { color: #27ae60; margin-top: 30px; }
+        code { background: #f4f4f4; padding: 2px 5px; border-radius: 3px; font-family: Consolas, Monaco, monospace; color: #c7254e; }
+        pre { background: #f8f9fa; padding: 15px; border-radius: 5px; border: 1px solid #e9ecef; overflow-x: auto; direction: ltr; text-align: left; }
+        pre code { background: none; color: #333; padding: 0; }
+        .note { background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        a { color: #3498db; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        @media print {
+            body { padding: 0; }
+            a { text-decoration: none; color: #000; }
+        }
+    </style>
+</head>
+<body>
+    <h1>دليل تشغيل المشروع على macOS (MacBook)</h1>
+    <p>هذا الدليل مخصص لتشغيل مشروع <strong>HifzTracker</strong> على جهاز MacBook جديد لا يحتوي على بايثون.</p>
+    <h2>1. تثبيت بايثون (Install Python)</h2>
+    <p>بما أن الجهاز لا يحتوي على بايثون، يجب تثبيته أولاً.</p>
+    <ol>
+        <li>اذهب إلى موقع بايثون الرسمي: <a href="https://www.python.org/downloads/">python.org/downloads</a></li>
+        <li>اضغط على الزر الأصفر <strong>Download Python 3.x.x</strong>.</li>
+        <li>افتح الملف الذي تم تحميله واتبع خطوات التثبيت (Install).</li>
+        <li><strong>هام:</strong> تأكد من أن التثبيت تم بنجاح بفتح "Terminal" وكتابة:</li>
+    </ol>
+    <pre><code>python3 --version</code></pre>
+    <p>يجب أن يظهر لك رقم الإصدار.</p>
+    <h2>2. تجهيز المشروع</h2>
+    <ol>
+        <li>قم بفك ضغط ملف المشروع الذي أرسلته لصديقك.</li>
+        <li>افتح برنامج <strong>VS Code</strong>.</li>
+        <li>اختر <strong>File &gt; Open Folder</strong> واختر مجلد المشروع.</li>
+    </ol>
+    <h2>3. إعداد البيئة الوهمية (Virtual Environment)</h2>
+    <p>من داخل VS Code:</p>
+    <ol>
+        <li>افتح التيرمنال (Terminal) عن طريق الضغط على <code>Ctrl + ~</code> أو من القائمة <code>Terminal &gt; New Terminal</code>.</li>
+        <li>اكتب الأمر التالي لإنشاء بيئة وهمية معزولة للمشروع:</li>
+    </ol>
+    <pre><code>python3 -m venv venv</code></pre>
+    <ol start="3">
+        <li>لتفعيل البيئة، اكتب:</li>
+    </ol>
+    <pre><code>source venv/bin/activate</code></pre>
+    <p>(ستلاحظ ظهور كلمة <code>(venv)</code> بجانب سطر الأوامر).</p>
+    <h2>4. تثبيت المكتبات المطلوبة (Install Requirements)</h2>
+    <p>الآن نحتاج لتثبيت "Django" وباقي المكتبات التي يعتمد عليها المشروع. تأكد أن البيئة مفعلة ثم اكتب:</p>
+    <pre><code>pip install -r requirements.txt</code></pre>
+    <h2>5. إعداد ملف البيئة (.env)</h2>
+    <p>المشروع يحتاج لملف إعدادات سري (<code>.env</code>).</p>
+    <ol>
+        <li>في قائمة الملفات، ابحث عن ملف اسمه <code>.env.example</code>.</li>
+        <li>انسخ محتواه وأنشئ ملفاً جديداً بجانبه اسمه <code>.env</code> فقط.</li>
+        <li>الصق المحتوى فيه واحفظ الملف.</li>
+    </ol>
+    <div class="note"><strong>ملاحظة:</strong> إذا لم تكن هناك إعدادات خاصة (مثل إيميلات حقيقية)، فالإعدادات الافتراضية ستكفي للتشغيل المحلي.</div>
+    <h2>6. تجهيز قاعدة البيانات</h2>
+    <p>لإنشاء قاعدة البيانات والجداول لأول مرة، اكتب الأمرين التاليين بالترتيب:</p>
+    <pre><code>python3 manage.py makemigrations
+python3 manage.py migrate</code></pre>
+    <h2>7. إنشاء حساب مدير (Superuser)</h2>
+    <p>للدخول للوحة التحكم كمدير:</p>
+    <pre><code>python3 manage.py createsuperuser</code></pre>
+    <p>واختر اسماً وكلمة مرور (لن تظهر كلمة المرور أثناء الكتابة، هذا طبيعي).</p>
+    <h2>8. تشغيل السيرفر! 🚀</h2>
+    <p>أخيراً، لتشغيل المشروع:</p>
+    <pre><code>python3 manage.py runserver</code></pre>
+    <p>سيظهر لك رابط (غالباً <code>http://127.0.0.1:8000/</code>)، اضغط عليه ومبروك عليك المشروع شغال!</p>
+</body>
+</html>

@@ -1,0 +1,530 @@
+{% extends "teacher_base.html" %}
+{% load static custom_filters %}
+
+{% block title %}الرئيسية{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-8">
+    <h1 class="text-3xl font-bold text-text-primary dark:text-text-primary-dark">الرئيسية</h1>
+    <div class="flex items-center gap-4">
+        <span class="text-text-secondary dark:text-text-secondary-dark text-lg">{{ today_date }}</span>
+    </div>
+</div>
+
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="bg-card dark:bg-card-dark p-6 rounded-lg shadow-subtle hover:shadow-lifted hover:-translate-y-1 transition-all duration-300 border-l-4 border-primary dark:border-success">
+        <div class="flex justify-between items-start">
+            <div class="flex flex-col">
+                <p class="text-sm text-text-secondary dark:text-text-secondary-dark">تسليمات تنتظر التصحيح</p>
+                <p class="text-4xl font-bold text-primary dark:text-success mt-2" id="pending-count">{{ pending_submissions_count }}</p>
+                {% if pending_submissions_count > 0 %}
+                <p class="text-sm text-success dark:text-success mt-1" id="pending-badge">تسليم جديد</p>
+                {% endif %}
+            </div>
+            <span class="material-symbols-outlined text-4xl text-primary/50 dark:text-success/50">hourglass_top</span>
+        </div>
+    </div>
+    <div class="bg-card dark:bg-card-dark p-6 rounded-lg shadow-subtle hover:shadow-lifted hover:-translate-y-1 transition-all duration-300">
+        <div class="flex justify-between items-start">
+            <div class="flex flex-col">
+                <p class="text-sm text-text-secondary dark:text-text-secondary-dark">إجمالي الطلاب</p>
+                <p class="text-4xl font-bold text-text-primary dark:text-text-primary-dark mt-2" id="total-students">{{ total_students_count }}</p>
+            </div>
+            <span class="material-symbols-outlined text-4xl text-text-secondary/50 dark:text-text-secondary-dark/50">groups</span>
+        </div>
+    </div>
+    <div class="bg-card dark:bg-card-dark p-6 rounded-lg shadow-subtle hover:shadow-lifted hover:-translate-y-1 transition-all duration-300">
+        <div class="flex justify-between items-start">
+            <div class="flex flex-col">
+                <p class="text-sm text-text-secondary dark:text-text-secondary-dark">الحلقات النشطة</p>
+                <p class="text-4xl font-bold text-text-primary dark:text-text-primary-dark mt-2" id="active-halaqat">{{ active_halaqat_count }}</p>
+            </div>
+            <span class="material-symbols-outlined text-4xl text-text-secondary/50 dark:text-text-secondary-dark/50">import_contacts</span>
+        </div>
+    </div>
+    <div class="bg-card dark:bg-card-dark p-6 rounded-lg shadow-subtle hover:shadow-lifted hover:-translate-y-1 transition-all duration-300">
+        <div class="flex justify-between items-start">
+            <div class="flex flex-col">
+                <p class="text-sm text-text-secondary dark:text-text-secondary-dark">متوسط الأداء</p>
+                <p class="text-4xl font-bold text-text-primary dark:text-text-primary-dark mt-2"><span id="avg-performance">{{ average_performance|floatformat:0 }}</span>%</p>
+            </div>
+            <span class="material-symbols-outlined text-4xl text-text-secondary/50 dark:text-text-secondary-dark/50">trending_up</span>
+        </div>
+    </div>
+</section>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <section class="lg:col-span-2">
+        <h2 class="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">أحدث التسليمات</h2>
+        <div class="bg-card dark:bg-card-dark rounded-lg shadow-subtle">
+            <ul class="divide-y divide-gray-200 dark:divide-border-color-dark/50" data-submissions-list>
+                {% if latest_submissions %}
+                    {% for sub in latest_submissions %}
+                    <li class="p-4 flex items-center justify-between hover:bg-background dark:hover:bg-background-dark transition-colors"
+                        data-submission-id="{{ sub.id }}">
+                        <div class="flex items-center gap-4">
+                            <img alt="Student Avatar" class="w-10 h-10 rounded-full object-cover" src="{{ sub.student.avatar_url }}"/>
+                            <div>
+                                <p class="font-bold text-text-primary dark:text-text-primary-dark">{{ sub.student.user.username }}</p>
+                                <p class="text-sm text-text-secondary dark:text-text-secondary-dark">
+                                    {% if sub.type == 'recitation' %}
+                                        {{ sub.recitation }}
+                                    {% else %}
+                                        {{ sub.review }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <button 
+                            class="js-grade-submission bg-primary text-white py-2 px-4 rounded-full text-sm font-bold hover:bg-secondary transition-colors"
+                            data-submission-id="{{ sub.id }}"
+                            data-submission-type="{{ sub.type }}"> {# <-- هذا السطر مهم جداً #}
+                            قيّم الآن
+                        </button>
+                    </li>
+                    {% endfor %}
+                    <li class="p-4 text-center text-text-secondary dark:text-text-secondary-dark hidden" id="no-submissions-empty">
+                        لا توجد تسليمات بانتظار التصحيح حاليًا.
+                    </li>
+                {% else %}
+                    <li class="p-4 text-center text-text-secondary dark:text-text-secondary-dark" id="no-submissions-empty">
+                        لا توجد تسليمات بانتظار التصحيح حاليًا.
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </section>
+
+    <section class="lg:col-span-1">
+        <h2 class="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">الحلقات</h2>
+        <div id="halaqat-list-container" class="space-y-4">
+            {% for item in halaqat_list %}
+            <div class="halaqa-card bg-card dark:bg-card-dark p-4 rounded-lg shadow-subtle" data-halaqa-id="{{ item.halaqa.id }}">
+                <h3 class="text-lg font-bold text-text-primary dark:text-text-primary-dark">{{ item.halaqa.name }}</h3>
+                <div class="flex items-center justify-between mt-2">
+                    <div class="flex items-center gap-2 text-text-secondary dark:text-text-secondary-dark">
+                        <span class="material-symbols-outlined text-lg">groups</span>
+                        <span class="text-sm">{{ item.student_count }} طلاب</span>
+                    </div>
+                </div>
+
+                <div class="text-xs text-text-secondary dark:text-text-secondary-dark mt-4 pt-3 border-t border-gray-100 dark:border-border-color-dark/50 space-y-1">
+                    {% if item.last_recitation_date %}
+                        <p class="flex items-center gap-2 last-recitation-status">
+                            <span class="material-symbols-outlined text-base">hearing</span>
+                            <span>آخر تسميع: {{ item.last_recitation_date|arabic_timesince }}</span>
+                        </p>
+                    {% else %}
+                         <p class="flex items-center gap-2 text-gray-400 dark:text-gray-500 last-recitation-status">
+                            <span class="material-symbols-outlined text-base">hearing</span>
+                            <span>لم تتم إضافة تسميعات بعد</span>
+                        </p>
+                    {% endif %}
+                    {% if item.last_review_date %}
+                        <p class="flex items-center gap-2 last-review-status">
+                            <span class="material-symbols-outlined text-base">history</span>
+                            <span>آخر مراجعة: {{ item.last_review_date|arabic_timesince }}</span>
+                        </p>
+                    {% else %}
+                        <p class="flex items-center gap-2 text-gray-400 dark:text-gray-500 last-review-status">
+                            <span class="material-symbols-outlined text-base">history</span>
+                            <span>لم تتم إضافة مراجعات بعد</span>
+                        </p>
+                    {% endif %}
+                </div>
+                <div class="mt-4 flex gap-2">
+                    <a href="{% url 'accounts:halaqa_details' item.halaqa.id %}" class="w-full text-center bg-primary text-white py-2 rounded-lg text-sm font-bold hover:bg-secondary transition-colors">عرض التفاصيل</a>
+                    <button class="js-add-halaqa-task w-full bg-primary/10 text-primary dark:bg-success/20 dark:text-success py-2 rounded-lg text-sm font-bold hover:bg-primary/20 dark:hover:bg-success/30 transition-colors"
+                            data-halaqa-id="{{ item.halaqa.id }}"
+                            data-halaqa-name="{{ item.halaqa.name }}">
+                        إضافة مهمة
+                    </button>
+                </div>
+            </div>
+            {% empty %}
+            <div class="bg-card dark:bg-card-dark p-4 rounded-lg shadow-subtle text-center text-text-secondary dark:text-text-secondary-dark">
+                لم يتم إسناد أي حلقات لك بعد.
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+{% include "teachers/_task_form_modal.html" %}
+
+<div class="modal fixed inset-0 z-50 p-4" id="gradeSubmissionModal">
+    <div class="modal-overlay fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm js-close-modal"></div>
+    <div class="w-full h-full flex items-center justify-center">
+        <div class="modal-content relative bg-card dark:bg-card-dark rounded-lg shadow-2xl w-full max-w-2xl">
+            <button class="absolute top-4 left-4 text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark transition-colors js-close-modal" title="إغلاق">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+
+            <div id="modal-loader" class="p-12 text-center text-text-secondary dark:text-text-secondary-dark">
+                <p>جاري تحميل البيانات...</p>
+            </div>
+
+            <div id="modal-grade-content" class="hidden">
+                <form id="gradeSubmissionForm" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="submission_id" id="submission_id_input">
+                    <div class="p-8">
+                        <div class="flex items-start gap-5 mb-6">
+                            <img id="modal-student-avatar" class="w-16 h-16 rounded-full object-cover ring-4 ring-primary/20 dark:ring-success/20" src="" alt="Student Avatar">
+                            <div>
+                                <h2 id="modal-student-name" class="text-2xl font-bold text-text-primary dark:text-text-primary-dark"></h2>
+                                <p id="modal-recitation-title" class="text-lg text-primary dark:text-success"></p>
+                                <div class="text-sm text-text-secondary dark:text-text-secondary-dark mt-2 space-y-1">
+                                    <p><b>الموعد النهائي:</b> <span id="modal-deadline"></span></p>
+                                    <p><b>تاريخ التسليم:</b> <span id="modal-submitted-at"></span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            <audio id="modal-audio-player" class="w-full" controls src=""></audio>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-background dark:bg-background-dark p-4 rounded-lg border border-border-color dark:border-border-color-dark">
+                                <h3 class="font-bold mb-3 text-center text-text-primary dark:text-text-primary-dark">تقييم الحفظ (من 5)</h3>
+                                <div class="flex items-center justify-center gap-2">
+                                    <input type="range" name="hifdh" min="0" max="5" value="5" step="0.5" class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary dark:accent-success" oninput="this.nextElementSibling.textContent = this.value">
+                                    <span class="font-bold text-lg text-primary dark:text-success w-10 text-center">5</span>
+                                </div>
+                            </div>
+
+                            <div class="bg-background dark:bg-background-dark p-4 rounded-lg border border-border-color dark:border-border-color-dark">
+                                <h3 class="font-bold mb-3 text-center text-text-primary dark:text-text-primary-dark">تقييم الأحكام (من 5)</h3>
+                                <div class="flex items-center justify-center gap-2">
+                                    <input type="range" name="rules" min="0" max="5" value="5" step="0.5" class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary dark:accent-success" oninput="this.nextElementSibling.textContent = this.value">
+                                    <span class="font-bold text-lg text-primary dark:text-success w-10 text-center">5</span>
+                                </div>
+                            </div>
+
+                            <div class="md:col-span-2">
+                                 <label for="notes" class="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-1">ملاحظات (اختياري)</label>
+                                 <textarea name="notes" rows="3" placeholder="اكتب ملاحظاتك للطالب هنا..." class="w-full bg-background dark:bg-background-dark border border-border-color dark:border-border-color-dark rounded-lg py-2.5 px-4 focus:ring-primary focus:border-primary placeholder-text-secondary dark:placeholder-text-secondary-dark text-text-primary dark:text-text-primary-dark transition-colors"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-background dark:bg-card-dark/50 px-8 py-4 flex justify-end gap-3 rounded-b-lg border-t border-gray-100 dark:border-border-color-dark/50">
+                        <button type="button" class="js-close-modal bg-gray-200 dark:bg-gray-700 text-text-secondary dark:text-text-secondary-dark px-6 py-2.5 rounded-lg font-bold hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">إلغاء</button>
+                        <button type="submit" class="bg-primary text-white flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold hover:bg-secondary transition-colors">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            <span>حفظ التقييم</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }} {# This will inherit the JS from teacher_base.html #}
+<script>
+// Your page-specific JS code remains the same
+document.addEventListener('DOMContentLoaded', function () {
+    const body = document.body;
+    const addTaskModal = document.getElementById('addTaskModal');
+    const gradeModal = document.getElementById('gradeSubmissionModal');
+    let activeModal = null;
+
+    let currentSubmissionId = null;
+
+    const setText = (sel, val) => { const el = document.querySelector(sel); if (el) el.textContent = val; };
+    const showEl = (el) => el && el.classList.remove('hidden');
+    const hideEl = (el) => el && el.classList.add('hidden');
+
+    const updateTopCards = (stats) => {
+        if (!stats) return;
+        setText('#pending-count', stats.pending_submissions_count);
+        setText('#total-students', stats.total_students_count);
+        setText('#active-halaqat', stats.active_halaqat_count);
+        setText('#avg-performance', stats.average_performance);
+        const badge = document.getElementById('pending-badge');
+        if (badge) {
+            Number(stats.pending_submissions_count) > 0 ? showEl(badge) : hideEl(badge);
+        }
+    };
+
+    const handleEmptySubmissionsList = () => {
+        const list = document.querySelector('[data-submissions-list]');
+        if (!list) return;
+        const emptyLi = document.getElementById('no-submissions-empty');
+        const remaining = list.querySelectorAll('li .js-grade-submission').length;
+        if (remaining === 0) showEl(emptyLi); else hideEl(emptyLi);
+    };
+
+    const openModal = (modalElement) => {
+        if (!modalElement) return;
+        activeModal = modalElement;
+        activeModal.classList.add('is-visible');
+        body.classList.add('modal-open');
+    };
+
+    const closeModal = () => {
+        if (!activeModal) return;
+        if (activeModal === addTaskModal) {
+            const formEl = addTaskModal.querySelector('form');
+            if (formEl) formEl.reset();
+        }
+        activeModal.classList.remove('is-visible');
+        body.classList.remove('modal-open');
+        activeModal = null;
+    };
+
+    const loadSurahsForHalaqa = async (halaqaId) => {
+        const surahSelect = addTaskModal.querySelector('#surah-select');
+        surahSelect.innerHTML = '<option value="">جاري تحميل السور...</option>';
+        surahSelect.disabled = true;
+        try {
+            const response = await fetch(`/accounts/api/halaqa/${halaqaId}/surahs/`);
+            if (!response.ok) throw new Error('Network response was not ok');
+            const data = await response.json();
+            surahSelect.innerHTML = '<option value="" disabled selected>اختر السورة</option>';
+            data.surahs.forEach(surah => {
+                const option = new Option(surah.name, surah.id);
+                surahSelect.add(option);
+            });
+            surahSelect.disabled = false;
+        } catch (error) {
+            console.error('Failed to load surahs:', error);
+            surahSelect.innerHTML = '<option value="">فشل تحميل السور</option>';
+        }
+    };
+
+    const updateHalaqaCardUI = (formData) => {
+        const halaqaId = formData.get('halaqa_id');
+        const taskType = formData.get('task_type');
+        const card = document.querySelector(`.halaqa-card[data-halaqa-id="${halaqaId}"]`);
+        if (!card) return;
+
+        let statusElement;
+        if (taskType === 'recitation') {
+            statusElement = card.querySelector('.last-recitation-status');
+            if (statusElement) {
+                statusElement.innerHTML = `<span class="material-symbols-outlined text-base">hearing</span> <span>آخر تسميع: الآن</span>`;
+                statusElement.classList.remove('text-gray-400', 'dark:text-gray-500');
+                statusElement.classList.add('text-text-secondary', 'dark:text-text-secondary-dark');
+            }
+        } else if (taskType === 'review') {
+            statusElement = card.querySelector('.last-review-status');
+            if (statusElement) {
+                statusElement.innerHTML = `<span class="material-symbols-outlined text-base">history</span> <span>آخر مراجعة: الآن</span>`;
+                statusElement.classList.remove('text-gray-400', 'dark:text-gray-500');
+                statusElement.classList.add('text-text-secondary', 'dark:text-text-secondary-dark');
+            }
+        }
+    };
+
+    document.addEventListener('click', async function(event) {
+        const addTaskButton = event.target.closest('.js-add-halaqa-task');
+        if (addTaskButton) {
+            const halaqaName = addTaskButton.dataset.halaqaName;
+            const halaqaId = addTaskButton.dataset.halaqaId;
+            addTaskModal.querySelector('#modal-halaqa-name').textContent = halaqaName;
+            addTaskModal.querySelector('#task-halaqa-id').value = halaqaId;
+            loadSurahsForHalaqa(halaqaId);
+            openModal(addTaskModal);
+            return;
+        }
+        
+        const gradeButton = event.target.closest('.js-grade-submission');
+        if (gradeButton) {
+            const submissionId = gradeButton.dataset.submissionId;
+            const submissionType = gradeButton.dataset.submissionType; // <-- جلب النوع
+            currentSubmissionId = submissionId;
+
+            const gradeForm = document.getElementById('gradeSubmissionForm');
+            const gradeLoader = document.getElementById('modal-loader');
+            const gradeContent = document.getElementById('modal-grade-content');
+            
+            gradeForm.action = `/accounts/teacher/submission/${submissionType}/${submissionId}/grade/`;
+
+            gradeLoader.style.display = 'block';
+            gradeContent.classList.add('hidden');
+            openModal(gradeModal);
+
+            try {
+                const response = await fetch(`/accounts/api/submission/${submissionType}/${submissionId}/`);
+                if (!response.ok) throw new Error('فشل تحميل البيانات');
+                const data = await response.json();
+
+                document.getElementById('modal-student-avatar').src = data.avatar_url;
+                document.getElementById('modal-student-name').textContent = data.student_name;
+                document.getElementById('modal-recitation-title').textContent = data.recitation_title;
+                document.getElementById('modal-deadline').textContent = data.deadline;
+                document.getElementById('modal-submitted-at').textContent = data.submitted_at;
+                document.getElementById('modal-audio-player').src = data.audio_url;
+
+                const hifdhInput = gradeForm.querySelector('input[name="hifdh"]');
+                const rulesInput = gradeForm.querySelector('input[name="rules"]');
+                hifdhInput.value = data.current_hifdh;
+                hifdhInput.nextElementSibling.textContent = data.current_hifdh;
+                rulesInput.value = data.current_rules;
+                rulesInput.nextElementSibling.textContent = data.current_rules;
+                gradeForm.querySelector('textarea[name="notes"]').value = data.current_notes;
+
+                gradeLoader.style.display = 'none';
+                gradeContent.classList.remove('hidden');
+
+            } catch (error) {
+                console.error("Error fetching submission details:", error);
+                closeModal();
+                Swal.fire('خطأ', 'لم نتمكن من جلب تفاصيل التسليم.', 'error');
+            }
+            return;
+        }
+
+        if (event.target.closest('.js-close-modal')) {
+            closeModal();
+            return;
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && activeModal) { closeModal(); }
+    });
+    
+    const taskTypeInput = addTaskModal ? addTaskModal.querySelector('#task-type-input') : null;
+    const recitationBtn = addTaskModal ? addTaskModal.querySelector('#recitation-btn') : null;
+    const reviewBtn = addTaskModal ? addTaskModal.querySelector('#review-btn') : null;
+
+    if (recitationBtn && reviewBtn && taskTypeInput) {
+        const activeClasses = "w-1/2 py-2.5 px-4 rounded-md font-bold text-sm transition-all duration-300 bg-card dark:bg-card-dark text-primary dark:text-success shadow-sm";
+        const inactiveClasses = "w-1/2 py-2.5 px-4 rounded-md font-bold text-sm transition-all duration-300 text-text-secondary dark:text-text-secondary-dark";
+
+        recitationBtn.addEventListener('click', () => {
+            taskTypeInput.value = 'recitation';
+            recitationBtn.className = activeClasses;
+            reviewBtn.className = inactiveClasses;
+        });
+
+        reviewBtn.addEventListener('click', () => {
+            taskTypeInput.value = 'review';
+            reviewBtn.className = activeClasses;
+            recitationBtn.className = inactiveClasses;
+        });
+    }
+
+    const addTaskForm = document.getElementById('addHalaqaTaskForm');
+    if (addTaskForm) {
+        addTaskForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(addTaskForm);
+            const submitButton = addTaskForm.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.classList.add('opacity-50');
+
+            fetch(addTaskForm.action, {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-CSRFToken': formData.get('csrfmiddlewaretoken') }
+            })
+            .then(response => response.json().then(data => ({ok: response.ok, data})))
+            .then(({ok, data}) => {
+                if (ok) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-start',
+                        icon: 'success',
+                        title: data.message,
+                        showConfirmButton: false,
+                        timer: 3500,
+                        timerProgressBar: true,
+                    });
+                    closeModal();
+                    updateHalaqaCardUI(formData);
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'حدث خطأ',
+                        text: data.message || 'لم يتم تحديد الخطأ من الخادم.',
+                        confirmButtonText: 'حسنًا'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Submission error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'خطأ في الاتصال',
+                    text: 'فشل إرسال البيانات. يرجى التحقق من الـ Console لمزيد من التفاصيل.',
+                    confirmButtonText: 'حسنًا'
+                });
+            })
+            .finally(() => {
+                submitButton.disabled = false;
+                submitButton.classList.remove('opacity-50');
+            });
+        });
+    }
+
+    const gradeForm = document.getElementById('gradeSubmissionForm');
+    if (gradeForm) {
+        gradeForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(gradeForm);
+            const data = {
+                hifdh: formData.get('hifdh'),
+                rules: formData.get('rules'),
+                notes: formData.get('notes'),
+                csrfmiddlewaretoken: formData.get('csrfmiddlewaretoken')
+            };
+            const submitButton = gradeForm.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.classList.add('opacity-50');
+
+            try {
+                const response = await fetch(gradeForm.action, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': data.csrfmiddlewaretoken
+                    },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-start',
+                        icon: 'success',
+                        title: result.message,
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                    closeModal();
+                    
+                    const itemToRemove = document.querySelector(`.js-grade-submission[data-submission-id="${currentSubmissionId}"]`)?.closest('li');
+                    if (itemToRemove) {
+                        itemToRemove.style.transition = 'opacity .25s ease, transform .25s ease';
+                        itemToRemove.style.opacity = '0';
+                        itemToRemove.style.transform = 'translateY(-4px)';
+                        setTimeout(() => {
+                            itemToRemove.remove();
+                            handleEmptySubmissionsList();
+                        }, 250);
+                    }
+
+                    updateTopCards(result.stats);
+
+                } else {
+                    throw new Error(result.message || 'حدث خطأ غير معروف');
+                }
+            } catch (error) {
+                Swal.fire('خطأ', error.message, 'error');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.classList.remove('opacity-50');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
